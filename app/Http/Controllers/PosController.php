@@ -2,16 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use Http;
 use Illuminate\Http\Request;
+use Session;
 
 class PosController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return inertia("PosPage");
+        $search =  $request->search;
+        $token = Session::get('api_token');
+        $items = [];
+        $currencies = [];
+
+        $query_params = [];
+        if ($request->has('search') && !empty($request->search)) {
+            $query_params['search'] = $request->search;
+        }
+
+        $response = Http::withToken($token)->get('http://127.0.0.1:8080/api/v1/items', $query_params);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $items = $data['data'];
+            $currencies = $data['rates'];
+        }
+
+        return inertia("PosPage", [
+            'items' => $items,
+            'currencies' => $currencies
+        ]);
     }
 
     /**

@@ -7,5 +7,8 @@ use Illuminate\Http\Request;
 
 class AuthenticationController extends Controller
 {
-    //
+    function index()
+    {
+
+    }
 }

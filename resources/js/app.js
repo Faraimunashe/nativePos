@@ -19,5 +19,5 @@ createInertiaApp({
       .use(SnackbarService)
       .mount(el);
   },
-  title: title => `${title} - Midlands Performance Monitoring`,
+  title: title => `${title} - MSU Canteen`,
 });
