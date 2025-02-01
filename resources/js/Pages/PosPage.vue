@@ -1,4 +1,5 @@
 <template>
+    <vue3-snackbar top right :duration="4000"></vue3-snackbar>
     <Head title="Point Of Sale" />
     <div class="flex space-x-6">
         <!-- Items List -->
@@ -42,9 +43,37 @@
             </div>
             <div class="text-lg font-bold text-gray-800 mt-4">Total: {{ selectedCurrency }} {{ (totalPrice * conversionRate).toFixed(2) }}</div>
             <div class="grid grid-cols-1 gap-2 mt-4 flex-shrink-0">
-                <button class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="payWithCash">Cash Payment</button>
+                <button class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="openCashModal">Cash Payment</button>
                 <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" @click="payWithCard">Card Payment</button>
                 <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600" @click="resetCart">Reset Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Payment Modal -->
+    <div v-if="showCashModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-xl font-bold mb-4">Cash Payment</h2>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 font-semibold mb-2">Total Amount</label>
+                <input type="text" :value="(totalPrice * conversionRate).toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 font-semibold mb-2">Cash Received</label>
+                <input type="number" v-model="cashReceived" @input="calculateChange"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 font-semibold mb-2">Change</label>
+                <input type="text" :value="change.toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+            </div>
+
+            <div class="flex justify-between mt-4">
+                <button @click="processCashPayment" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Process Payment</button>
+                <button @click="closeCashModal" class="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500">Cancel</button>
             </div>
         </div>
     </div>
@@ -54,18 +83,25 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
 import Layout from "../Shared/Layout.vue";
+import { useSnackbar } from "vue3-snackbar";
 
 export default {
     layout: Layout,
     props: {
         items: Array,
         currencies: Array,
+        terminal: String,
+        location: String
     },
     setup(props) {
         const search = ref("");
         const cart = ref([]);
         const selectedCurrency = ref("USD");
         const conversionRate = ref(1);
+        const showCashModal = ref(false);
+        const cashReceived = ref(0);
+        const change = ref(0);
+        const snackbar = useSnackbar();
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
@@ -93,8 +129,62 @@ export default {
             return cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0);
         });
 
-        const payWithCash = () => {
-            alert("Processing Cash Payment...");
+        const openCashModal = () => {
+            showCashModal.value = true;
+            cashReceived.value = 0;
+            change.value = 0;
+        };
+
+        const closeCashModal = () => {
+            showCashModal.value = false;
+        };
+
+        const calculateChange = () => {
+            const total = totalPrice.value * conversionRate.value;
+            change.value = Math.max(cashReceived.value - total, 0);
+        };
+
+        const processCashPayment = () => {
+            if (cashReceived.value < totalPrice.value * conversionRate.value) {
+                alert("Insufficient cash received!");
+                return;
+            }
+
+            const paymentData = {
+                amount: totalPrice.value * conversionRate.value,
+                type: "CASH",
+                currency: selectedCurrency.value,
+                items: cart.value.map(item => ({
+                    item_id: item.id,
+                    qty: item.quantity,
+                    price: item.price * conversionRate.value,
+                    total_price: (item.price * conversionRate.value) * item.quantity
+                })),
+                change: change.value,
+                cash: cashReceived.value,
+                terminal: 'ESADZA01',
+                location: 'DEVELOPMENT DESK'
+            };
+
+            // Post the payment data to the Laravel route
+            router.post("/cash", paymentData, {
+                onSuccess: () => {
+                    //alert("Payment successful!");
+                    snackbar.add({
+                        type: 'success',
+                        text: 'Payment was successful'
+                    });
+                    resetCart();
+                    closeCashModal();
+                },
+                onError: (errors) => {
+                    //alert("Error processing payment: " + errors.error);
+                    snackbar.add({
+                        type: 'error',
+                        text: errors.error
+                    })
+                }
+            });
         };
 
         const payWithCard = () => {
@@ -129,11 +219,18 @@ export default {
             addToCart,
             removeItem,
             resetCart,
-            payWithCash,
+            openCashModal,
+            closeCashModal,
+            cashReceived,
+            change,
+            calculateChange,
+            processCashPayment,
             payWithCard,
             totalPrice,
+            showCashModal,
             updatePrices
         };
     },
 };
 </script>
+

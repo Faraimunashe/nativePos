@@ -19,6 +19,8 @@ Route::middleware(['api.auth'])->group(function () {
     Route::get('/reports', [ReportController::class, 'index']);
     Route::get('/pos', [PosController::class, 'index']);
 
+    Route::post('/cash', [PosController::class, 'store']);
+
 
 
 });

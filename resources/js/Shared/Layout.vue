@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gray-100 p-6 flex flex-col">
+    <div class="min-h-screen bg-gray-100 p-5 flex flex-col">
         <NavBar :username="username" :role="role" />
         <slot />
     </div>

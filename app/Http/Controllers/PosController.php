@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Http;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Session;
 
 class PosController extends Controller
@@ -50,7 +51,40 @@ class PosController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try{
+
+            $validated_data = $request->validate([
+                "amount" => ["required","numeric", 'min:0'],
+                "type" => ["required","string","in:CASH,EFT"],
+                "currency" => ["required","string","max:3", "min:3"],
+                'items' => ['required', 'array', 'min:1'],
+                'items.*.item_id' => ['required', 'integer'],
+                'items.*.qty' => ['required', 'integer', 'min:1'],
+                'items.*.price' => ['required', 'numeric', 'min:0'],
+                'items.*.total_price' => ['required', 'numeric', 'min:0'],
+                'change' => ['required', 'numeric', 'min:0'],
+                'cash' => ['required', 'numeric', 'min:0'],
+                'terminal' => ['required', 'string'],
+                'location' => ['required', 'string'],
+            ]);
+
+            $token = Session::get('api_token');
+
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $token,
+            ])->post('http://127.0.0.1:8080/api/v1/sales', $validated_data);
+
+            if ($response->successful()) {
+                return back()->with(['success' => 'Sale recorded successfully']);
+            } else {
+                return back()->withErrors(['error' => 'API Error: ' . $response->body()]);
+            }
+
+        }catch (\Exception $e){
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     /**

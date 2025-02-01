@@ -1,152 +1,176 @@
 <template>
-    <div class="min-h-screen bg-gray-100 p-6 flex flex-col">
-      <!-- Top Navigation -->
-        <div class="bg-white shadow-md p-4 flex justify-between items-center mb-6 rounded-lg">
-            <!-- Left Section: Branding & Location Info -->
-            <div>
-                <h2 class="text-lg font-semibold">MSU CANTEEN POS</h2>
-                <p class="text-gray-600">Location: Main Branch | Terminal ID: 12345</p>
+    <Head title="My Reports" />
+    <div class="max-w-7xl py-6">
+        <div class="bg-white shadow-md p-6 rounded-lg mb-6 flex flex-wrap gap-6">
+            <div class="flex flex-col w-full sm:w-1/6">
+                <label for="searchQuery" class="mb-2 text-gray-700 font-medium">Search</label>
+                <input v-model="searchQuery" type="text" placeholder="Search by reference, type, or date"
+                    class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200 ease-in-out w-full">
             </div>
 
-            <!-- Middle Section: Navigation Links -->
-            <nav class="flex space-x-6">
-                <a href="/pos" class="text-gray-700 hover:text-blue-600 font-medium flex items-center space-x-2">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Pos</span>
-                </a>
-                <a href="/reports" class="text-gray-700 hover:text-blue-600 font-medium flex items-center space-x-2">
-                <i class="fas fa-chart-bar"></i>
-                <span>Reports</span>
-                </a>
-            </nav>
-
-            <!-- Right Section: User Profile Dropdown -->
-            <div class="relative">
-                <button class="bg-gray-200 px-4 py-2 rounded-lg flex items-center space-x-2" @click="toggleDropdown">
-                <i class="fas fa-user"></i>
-                <span>Faraimunashe Manjeese ▼</span>
-                </button>
-                <div v-if="dropdownOpen" class="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-48">
-                <a href="#" class="block px-4 py-2 hover:bg-gray-100 flex items-center space-x-2">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Profile</span>
-                </a>
-                <a href="#" class="block px-4 py-2 hover:bg-gray-100 flex items-center space-x-2">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="#" class="block px-4 py-2 hover:bg-gray-100 text-red-600 flex items-center space-x-2">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-                </div>
+            <div class="flex flex-col w-full sm:w-1/6">
+                <label for="startDate" class="mb-2 text-gray-700 font-medium">Start Date</label>
+                <input v-model="startDate" type="date" id="startDate"
+                    class="px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out w-full">
             </div>
+
+            <div class="flex flex-col w-full sm:w-1/6">
+                <label for="endDate" class="mb-2 text-gray-700 font-medium">End Date</label>
+                <input v-model="endDate" type="date" id="endDate"
+                    class="px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out w-full">
+            </div>
+
+            <div class="flex flex-col w-full sm:w-1/6">
+                <label for="currency" class="mb-2 text-gray-700 font-medium">Currency</label>
+                <select v-model="currency" id="currency"
+                        class="px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out w-full">
+                    <option value="">Select Currency</option>
+                    <option v-for="curr in currencies" :key="curr.id" :value="curr.currency_code">{{ curr.currency_code }}</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col w-full sm:w-1/6">
+                <label for="type" class="mb-2 text-gray-700 font-medium">Type</label>
+                <select v-model="type" id="type"
+                        class="px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out w-full">
+                    <option value="">Select Type</option>
+                    <option v-for="typ in trans_types" :key="typ.type" :value="typ.type">{{ typ.type }}</option>
+                </select>
+            </div>
+            <span v-for="total in totals" :key="total.currency" class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-lg font-semibold shadow-md">
+                <span class="mr-1">{{ total.currency }}</span> {{ total.total_amount }}
+            </span>
         </div>
 
-      <!-- Search Bar -->
-      <div class="bg-white shadow-md p-4 rounded-lg mb-4 flex items-center space-x-4">
-        <i class="fas fa-search text-gray-500"></i>
-        <input v-model="searchQuery" type="text" placeholder="Search by reference, type, or date"
-               class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-      </div>
 
-      <!-- Sales Reports Table -->
-      <div class="bg-white shadow-lg rounded-lg p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Sales Reports</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse border border-gray-300">
-            <thead>
-              <tr class="bg-gray-200 text-gray-700">
+      <!-- Sales Table with Pagination -->
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <!-- Table Header -->
+          <thead class="bg-gray-50">
+            <tr class="bg-gray-200 text-gray-700">
                 <th class="border px-4 py-2 text-left">Reference</th>
                 <th class="border px-4 py-2 text-left">Amount</th>
                 <th class="border px-4 py-2 text-left">Currency</th>
                 <th class="border px-4 py-2 text-left">Type</th>
                 <th class="border px-4 py-2 text-left">Date</th>
                 <th class="border px-4 py-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(sale, index) in filteredSales" :key="sale.reference" class="hover:bg-gray-100 cursor-pointer">
-                <td class="border px-4 py-2">{{ sale.reference }}</td>
-                <td class="border px-4 py-2">${{ sale.amount.toFixed(2) }}</td>
-                <td class="border px-4 py-2">{{ sale.currency }}</td>
-                <td class="border px-4 py-2">{{ sale.type }}</td>
-                <td class="border px-4 py-2">{{ sale.created_at }}</td>
-                <td class="border px-4 py-2 text-center">
-                  <button @click="toggleSaleItems(index)" class="text-blue-500 hover:underline">
-                    <i class="fas fa-eye"></i> View Items
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="selectedSale !== null">
-                <td colspan="6" class="bg-gray-50 p-4">
-                  <h3 class="text-lg font-semibold text-gray-700 mb-2">Sale Items</h3>
-                  <table class="w-full border-collapse border border-gray-300">
-                    <thead>
-                      <tr class="bg-gray-200 text-gray-700">
-                        <th class="border px-4 py-2 text-left">Item Name</th>
-                        <th class="border px-4 py-2 text-left">Qty</th>
-                        <th class="border px-4 py-2 text-left">Unit Price</th>
-                        <th class="border px-4 py-2 text-left">Total Price</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="item in sales[selectedSale].items" :key="item.name">
-                        <td class="border px-4 py-2">{{ item.name }}</td>
-                        <td class="border px-4 py-2">{{ item.qty }}</td>
-                        <td class="border px-4 py-2">${{ item.unit_price.toFixed(2) }}</td>
-                        <td class="border px-4 py-2">${{ item.total_price.toFixed(2) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="sale in sales" :key="sale.id">
+              <td class="py-4 px-6 text-sm font-medium text-gray-900">{{ sale.reference }}</td>
+              <td class="py-4 px-6 text-sm text-gray-500">${{ sale.amount }}</td>
+              <td class="py-4 px-6 text-sm text-gray-500">{{ sale.currency }}</td>
+              <td class="py-4 px-6 text-sm text-gray-500">{{ sale.type }}</td>
+              <td class="py-4 px-6 text-sm text-gray-500">{{ sale.created_at }}</td>
+              <td class="py-4 px-6 text-sm font-medium">
+                <Button @click="showItemsModal(sale)" type="button" class="text-blue-600 hover:text-blue-900">
+                  <i class="fas fa-eye"></i>
+                  show items
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal for Showing Sale Items -->
+      <div v-if="isModalVisible" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-1/2 p-6">
+          <!-- Modal Content for Item Details -->
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Sale Details</h2>
+            <button @click="closeModal" class="text-gray-500 hover:text-gray-800">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <!-- Sale Information -->
+          <div class="bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
+            <p class="text-sm text-gray-600">
+              <span class="font-semibold text-gray-800">Reference:</span> {{ selectedSale.reference }}
+            </p>
+            <!-- More sale info here -->
+          </div>
+          <!-- Items Sold -->
+          <ul class="divide-y divide-gray-200 bg-white shadow-md rounded-lg">
+            <li v-for="item in selectedSaleItems" :key="item.id" class="flex items-center justify-between p-4 hover:bg-gray-50">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-800">{{ item.item.name }}</h3>
+                <p class="text-sm text-gray-500">Quantity: {{ item.qty }} | Unit Price: ${{ item.unit_price }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm text-gray-500">Total:</p>
+                <p class="text-lg font-bold text-blue-600">${{ item.total_price }}</p>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
   </template>
 
-  <script setup>
-  import { ref, computed } from "vue";
+  <script>
+  import { ref, onMounted, watch } from 'vue';
+  import { router } from '@inertiajs/vue3';
+  import Layout from "../Shared/Layout.vue";
 
-  const searchQuery = ref("");
-  const selectedSale = ref(null);
-  const sales = ref([
-    {
-      reference: "INV-001",
-      amount: 50.99,
-      currency: "USD",
-      type: "Cash",
-      created_at: "2024-01-01",
-      items: [
-        { name: "Burger", qty: 2, unit_price: 5.99, total_price: 11.98 },
-        { name: "Coke", qty: 1, unit_price: 2.99, total_price: 2.99 },
-      ],
+  export default {
+    layout: Layout,
+    props: {
+      sales: Array,
+      trans_types: Array,
+      currencies: Array,
+      totals: Array,
     },
-    {
-      reference: "INV-002",
-      amount: 30.50,
-      currency: "USD",
-      type: "Card",
-      created_at: "2024-01-02",
-      items: [
-        { name: "Pizza", qty: 1, unit_price: 15.50, total_price: 15.50 },
-        { name: "Juice", qty: 2, unit_price: 7.50, total_price: 15.00 },
-      ],
-    },
-  ]);
+    setup() {
+      const startDate = ref('');
+      const endDate = ref('');
+      const currency = ref('');
+      const type = ref('');
+      const reference = ref('');
 
-  const filteredSales = computed(() => {
-    return sales.value.filter(sale =>
-      sale.reference.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      sale.type.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      sale.created_at.includes(searchQuery.value)
-    );
-  });
+      const isModalVisible = ref(false);
+      const selectedSale = ref({});
+      const selectedSaleItems = ref([]);
 
-  const toggleSaleItems = (index) => {
-    selectedSale.value = selectedSale.value === index ? null : index;
+        watch([startDate, endDate, currency, type, reference], () => {
+            router.get('/reports', {
+                start_date: startDate.value,
+                end_date: endDate.value,
+                currency: currency.value,
+                type: type.value,
+                reference: reference.value
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true
+            });
+        });
+
+      function showItemsModal(sale) {
+        selectedSale.value = sale;
+        selectedSaleItems.value = sale.items;
+        isModalVisible.value = true;
+      }
+
+      function closeModal() {
+        isModalVisible.value = false;
+      }
+
+      return {
+        startDate,
+        endDate,
+        currency,
+        type,
+        reference,
+        isModalVisible,
+        selectedSale,
+        selectedSaleItems,
+        showItemsModal,
+        closeModal,
+      };
+    }
   };
   </script>
+
