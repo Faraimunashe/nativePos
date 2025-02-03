@@ -26,9 +26,9 @@
                     <i class="fas fa-user-circle"></i>
                     <span>Profile</span>
                 </Link>
-                <Link href="/settings" class="block px-4 py-2 hover:bg-gray-100 flex items-center space-x-2">
+                <Link href="/configs" class="block px-4 py-2 hover:bg-gray-100 flex items-center space-x-2">
                     <i class="fas fa-cog"></i>
-                    <span>Settings</span>
+                    <span>Configurations</span>
                 </Link>
                 <Link method="POST" href="/logout" class="block px-4 py-2 hover:bg-gray-100 text-red-600 flex items-center space-x-2">
                     <i class="fas fa-sign-out-alt"></i>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ApiTokenMiddleware;
+use App\Http\Middleware\EnvConfigMiddleware;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'api.auth' => ApiTokenMiddleware::class,
+            'configs' => EnvConfigMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

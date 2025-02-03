@@ -77,6 +77,14 @@
             </div>
         </div>
     </div>
+
+    <PayWithCardModal
+        :show="showCardModal"
+        :totalPrice="totalPrice"
+        :conversionRate="conversionRate"
+        :selectedCurrency="selectedCurrency"
+        @close="showCardModal = false"
+    />
 </template>
 
 <script>
@@ -84,9 +92,13 @@ import { ref, computed, watch, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
 import Layout from "../Shared/Layout.vue";
 import { useSnackbar } from "vue3-snackbar";
+import PayWithCardModal from "./components/PayWithCardModal.vue";
 
 export default {
     layout: Layout,
+    components: {
+        PayWithCardModal
+    },
     props: {
         items: Array,
         currencies: Array,
@@ -102,6 +114,7 @@ export default {
         const cashReceived = ref(0);
         const change = ref(0);
         const snackbar = useSnackbar();
+        const showCardModal = ref(false);
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
@@ -188,7 +201,7 @@ export default {
         };
 
         const payWithCard = () => {
-            alert("Processing Card Payment...");
+            showCardModal.value = true;
         };
 
         watch(selectedCurrency, () => {
@@ -228,7 +241,9 @@ export default {
             payWithCard,
             totalPrice,
             showCashModal,
-            updatePrices
+            updatePrices,
+            showCardModal,
+            payWithCard
         };
     },
 };

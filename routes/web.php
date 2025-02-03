@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Config\EnvConfigController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -9,10 +10,14 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/login', [LoginController::class, 'index'])->name('login');
-Route::post('/login', [LoginController::class, 'login'])->name('login');
+Route::get('/login', [LoginController::class, 'index'])->middleware('configs')->name('login');
+Route::post('/login', [LoginController::class, 'login'])->middleware('configs')->name('login');
 
-Route::middleware(['api.auth'])->group(function () {
+
+Route::get('/configs', [EnvConfigController::class, 'index'])->name('configs');
+Route::post('/configs', [EnvConfigController::class, 'store'])->name('configs');
+
+Route::middleware(['api.auth','configs'])->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 

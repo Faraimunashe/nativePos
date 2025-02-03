@@ -38,7 +38,7 @@
                 </select>
             </div>
             <span v-for="total in totals" :key="total.currency" class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-lg font-semibold shadow-md">
-                <span class="mr-1">{{ total.currency }}</span> {{ total.total_amount }}
+                <span class="mr-1">{{ total.currency }}</span> <b>{{ total.total_amount }}</b>
             </span>
         </div>
 
