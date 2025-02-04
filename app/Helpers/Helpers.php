@@ -40,3 +40,13 @@ function get_location()
     $location = $env->location;
     return $location;
 }
+
+function convert_minor($amount) {
+    $amount = floatval($amount);
+    return round($amount * 100);
+}
+
+function convert_major($amount) {
+    $amount = intval($amount);
+    return number_format($amount / 100, 2, '.', '');
+}

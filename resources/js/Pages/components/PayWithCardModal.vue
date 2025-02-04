@@ -72,7 +72,8 @@ export default {
             router.post("/card", paymentData, {
                 onSuccess: () => {
                     alert('Payment was successful');
-                    processPayment();
+                    this.$emit("resetCart");
+                    this.closeModal();
                 },
                 onError: (errors) => {
                     alert(errors.error);

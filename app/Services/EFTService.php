@@ -44,13 +44,13 @@ class EFTService
                 throw new Exception("Failed to connect: $errstr ($errno)");
             }
 
-            echo "Connected to server: {$this->serverIp}:{$this->serverPort}\n";
+            //echo "Connected to server: {$this->serverIp}:{$this->serverPort}\n";
             $this->sendInitXML();
 
             if ($this->receiveAndCheckResponse()) {
-                echo "Connection approved.\n";
+                //echo "Connection approved.\n";
             } else {
-                echo "Initialization not approved. Closing connection.\n";
+                //echo "Initialization not approved. Closing connection.\n";
                 fclose($this->socket);
                 $this->socket = null;
             }
@@ -61,19 +61,19 @@ class EFTService
     {
         $closeXml = $this->generateXml('CLOSE');
         $this->sendXML($closeXml);
-        echo "CLOSE XML sent to the server.\n";
+        //echo "CLOSE XML sent to the server.\n";
     }
 
     public function sendXMLMessage(string $xml, string $transCurrency)
     {
         if (!$this->socket || !is_resource($this->socket)) {
-            echo "Socket is not connected. Reinitializing connection.\n";
+            //echo "Socket is not connected. Reinitializing connection.\n";
             $this->initializeConnection();
         }
 
         $this->transCurrency = strtoupper($transCurrency);
         $this->sendXML($xml);
-        echo "XML message sent to the server.\n";
+        //echo "XML message sent to the server.\n";
 
         // Wait for response
         $response = $this->waitForTransactionResponse();
@@ -108,15 +108,21 @@ class EFTService
 
                 $response .= $chunk;
 
-                // Check if the response contains <Esp:Transaction>
-                if (strpos($response, '<Esp:Transaction') !== false) {
-                    // Clean response
-                    $response = preg_replace('/[\x00-\x1F\x80-\x9F]/', '', $response);
-                    $response = html_entity_decode($response, ENT_NOQUOTES, 'UTF-8');
+                // Check if the chunk contains <Esp:Transaction> or <Esp:Interface>
+                if (strpos($response, '<Esp:Transaction') !== false || strpos($response, '<Esp:Interface') !== false) {
+                    //dd($response);
+                    // Extract the chunk containing <Esp:Interface> and <Esp:Transaction> (if present)
+                    preg_match('/<Esp:Interface[^>]*><Esp:Transaction[^>]*>.*?<\/Esp:Transaction>.*?<\/Esp:Interface>/s', $response, $matches);
 
-                    \Log::info('EFT Response: ' . $response);
+                    if (!empty($matches)) {
+                        // Clean the response before returning
+                        $cleanResponse = preg_replace('/[\x00-\x1F\x80-\x9F]/', '', $matches[0]);
+                        $cleanResponse = html_entity_decode($cleanResponse, ENT_NOQUOTES, 'UTF-8');
 
-                    return $response;
+                        \Log::info('EFT Response: ' . $cleanResponse);
+
+                        return $cleanResponse; // Return both <Esp:Interface> and <Esp:Transaction> chunks
+                    }
                 }
             }
 
@@ -128,6 +134,7 @@ class EFTService
         }
     }
 
+
     private function parseTransactionResponse(string $response): array
     {
         if (empty($response)) {
@@ -137,52 +144,64 @@ class EFTService
         // Remove non-printable characters (e.g., BOM, special characters)
         $cleanResponse = preg_replace('/[^\x20-\x7E\x0A\x0D]/', '', $response);
 
+        // Extract all XML parts that contain <Esp:Interface> and <Esp:Transaction> elements
+        preg_match_all('/<\?xml[^?]+\?>\s*<Esp:Interface[^>]*>.*?<\/Esp:Interface>.*?<Esp:Transaction[^>]*>.*?<\/Esp:Transaction>/s', $cleanResponse, $matches);
+        $xmlParts = $matches[0];
+
+        // Extract non-matching parts (anything that isn't part of the <Esp:Interface> + <Esp:Transaction>)
+        $nonMatchingParts = preg_split('/<\?xml[^?]+\?>\s*<Esp:Interface[^>]*>.*?<\/Esp:Interface>.*?<Esp:Transaction[^>]*>.*?<\/Esp:Transaction>/s', $cleanResponse);
+
+        // Filter out empty elements
+        $nonMatchingParts = array_filter($nonMatchingParts, fn($part) => trim($part) !== '');
 
         $transactionXml = $cleanResponse;
 
-        preg_match_all('/<\?xml[^?]+\?>\s*<Esp:Interface[^>]*>.*?<\/Esp:Interface>/s', $cleanResponse, $matches);
-
-        $xmlParts = $matches[0];
-
         foreach ($xmlParts as $index => $xml) {
-            try {
-                // Create a SimpleXMLElement object
-                $xmlObject = new SimpleXMLElement($xml);
+            // Trim and clean the XML string by removing non-printable characters
+            $cleanedXml = trim($xml);
+            $cleanedXml = preg_replace('/[\x00-\x1F\x7F]/', '', $cleanedXml);
 
-                // Check if the Esp:Transaction element exists
+            // Create SimpleXMLElement object from the cleaned XML string
+            try {
+                $xmlObject = new SimpleXMLElement($cleanedXml);
+
+                // Check if <Esp:Transaction> exists in the XML
                 if ($xmlObject->xpath('//Esp:Transaction')) {
-                    $transactionXml = $xml;
+                    $transactionXml = $cleanedXml;
                 }
+
             } catch (Exception $e) {
-                echo "Error parsing XML document " . ($index + 1) . ": " . $e->getMessage() . "\n";
+                error_log("Failed to parse XML at index {$index}: {$e->getMessage()}");
+                continue;
             }
         }
 
-
-        libxml_use_internal_errors(true); // Prevent XML parsing warnings
+        libxml_use_internal_errors(true);
         $xml = simplexml_load_string($transactionXml, "SimpleXMLElement", LIBXML_NOCDATA);
 
         if (!$xml) {
             return ['approved' => false, 'message' => 'Failed to parse transaction XML', 'raw' => $transactionXml];
         }
 
-        // Register namespace
+        // Register namespace if exists
         $namespaces = $xml->getNamespaces(true);
         if (isset($namespaces['Esp'])) {
             $xml->registerXPathNamespace('Esp', $namespaces['Esp']);
         }
 
-        // Extract transaction data
+        // Extract the <Esp:Transaction> element
         $transaction = $xml->xpath('//Esp:Transaction')[0] ?? null;
 
         if (!$transaction) {
             return ['approved' => false, 'message' => 'No valid transaction found', 'raw' => $transactionXml];
         }
 
-        $actionCode = (string) $transaction['ActionCode'] ?? 'UNKNOWN';
-        $responseCode = (string) $transaction['ResponseCode'] ?? 'UNKNOWN';
-        $transactionId = (string) $transaction['TransactionId'] ?? 'UNKNOWN';
+        // Extract relevant fields from <Esp:Transaction>
+        $actionCode = (string) ($transaction['ActionCode'] ?? 'UNKNOWN');
+        $responseCode = (string) ($transaction['ResponseCode'] ?? 'UNKNOWN');
+        $transactionId = (string) ($transaction['TransactionId'] ?? 'UNKNOWN');
 
+        // Return the parsed data
         return [
             'approved' => $actionCode === 'APPROVE' || $responseCode === '00',
             'transaction_id' => $transactionId,
@@ -192,66 +211,11 @@ class EFTService
         ];
     }
 
-
-
-
-    // private function parseTransactionResponse(string $response): array
-    // {
-    //     if (empty($response)) {
-    //         return ['approved' => false, 'message' => 'No response received from the server'];
-    //     }
-
-    //     // Remove non-printable characters (including extra new lines, spaces, etc.)
-    //     $clean_string = preg_replace('/[^\x20-\x7E]/', '', trim($response));
-
-    //     // Remove anything before the first XML declaration
-    //     $clean_string = preg_replace('/^.*?(<\?xml\s)/s', '<?xml ', $clean_string);
-
-    //     // Try to load the XML
-    //     libxml_use_internal_errors(true); // Enable error handling
-    //     $xml = simplexml_load_string($clean_string, "SimpleXMLElement", LIBXML_NOCDATA);
-
-    //     if (!$xml) {
-    //         $errors = libxml_get_errors();
-    //         libxml_clear_errors();
-    //         return [
-    //             'approved' => false,
-    //             'message' => 'Invalid XML response',
-    //             'errors' => array_map(fn($error) => $error->message, $errors),
-    //             'raw' => $clean_string
-    //         ];
-    //     }
-
-    //     $namespaces = $xml->getNamespaces(true);
-    //     if (isset($namespaces['Esp'])) {
-    //         $xml->registerXPathNamespace('Esp', $namespaces['Esp']);
-    //     }
-
-    //     // Extract Transaction Data
-    //     $transaction = $xml->xpath('//Esp:Transaction');
-
-    //     if ($transaction) {
-    //         $transaction = $transaction[0];
-    //         $actionCode = (string) $transaction['ActionCode'] ?? 'UNKNOWN';
-    //         $responseCode = (string) $transaction['ResponseCode'] ?? 'UNKNOWN';
-    //         $transactionId = (string) $transaction['TransactionId'] ?? 'UNKNOWN';
-
-    //         return [
-    //             'approved' => $actionCode === 'APPROVED' || $responseCode === '00',
-    //             'message' => "TransactionId: $transactionId, ActionCode: $actionCode, ResponseCode: $responseCode",
-    //             'raw' => $clean_string
-    //         ];
-    //     }
-
-    //     return ['approved' => false, 'message' => 'Unknown response format', 'raw' => $clean_string];
-    // }
-
-
     private function sendInitXML()
     {
         $initXml = $this->generateXml('INIT');
         $this->sendXML($initXml);
-        echo "INIT XML sent to the server.\n";
+        //echo "INIT XML sent to the server.\n";
     }
 
     private function generateXml(string $action): string
@@ -283,7 +247,7 @@ class EFTService
 
         $length = unpack("n", $header)[1];
         $responseData = fread($this->socket, $length);
-        echo "Response from server:\n$responseData\n";
+        //echo "Response from server:\n$responseData\n";
 
         return strpos($responseData, 'ActionCode="APPROVE"') !== false;
     }
