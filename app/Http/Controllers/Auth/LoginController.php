@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
 {
+
     public function index()
     {
         return inertia('Auth/LoginPage');
@@ -22,7 +23,9 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        $response = Http::post('http://127.0.0.1:8080/api/v1/login', [
+        $url = base_url() . '/login';
+
+        $response = Http::post($url, [
             'email' => $request->email,
             'password' => $request->password
         ]);
@@ -51,9 +54,10 @@ class LoginController extends Controller
     public function logout()
     {
         $token = Session::get('api_token');
+        $url = base_url() . '/logout';
 
         if ($token) {
-            $response = Http::withToken($token)->post('http://127.0.0.1:8080/api/v1/logout');
+            $response = Http::withToken($token)->post($url);
 
             if ($response->successful()) {
                 Session::forget(['api_token', 'user']);

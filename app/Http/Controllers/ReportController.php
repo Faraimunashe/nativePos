@@ -46,10 +46,11 @@ class ReportController extends Controller
         }
 
 
+        $url = base_url() . '/report';
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
-        ])->get('http://127.0.0.1:8080/api/v1/report', $query_params);
+        ])->get($url, $query_params);
 
         if ($response->successful()) {
             $data = $response->json();

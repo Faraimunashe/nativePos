@@ -17,7 +17,7 @@
 
 
             <div class="flex justify-between mt-4">
-                <button @click="processPayment"
+                <button @click="processCardPayment"
                         class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
                     Pay Now
                 </button>
@@ -31,21 +31,55 @@
 </template>
 
 <script>
+import { ref, computed, watch, onMounted } from "vue";
+import { router } from "@inertiajs/vue3";
+
 export default {
     props: {
         show: Boolean,
         totalPrice: Number,
         conversionRate: Number,
-        selectedCurrency: String
+        selectedCurrency: String,
+        cart: Array,
+        eftCode: String
     },
     methods: {
         processPayment() {
-                alert("Payment Successful!");
-                this.$emit("close");
+            alert("Payment Successful!");
+            this.$emit("close");
         },
         closeModal() {
             this.$emit("close");
+        },
+        processCardPayment () {
+            const paymentData = {
+                amount: this.totalPrice * this.conversionRate,
+                type: "EFT",
+                eft_code: this.eftCode,
+                currency: this.selectedCurrency,
+                items: this.cart.map(item => ({
+                    item_id: item.id,
+                    qty: item.quantity,
+                    price: item.price * this.conversionRate,
+                    total_price: (item.price * this.conversionRate) * item.quantity
+                })),
+                change: 0,
+                cash: 0,
+                terminal: 'MSUGWE01',
+                location: 'DEVELOPMENT DESK'
+            };
+
+            router.post("/card", paymentData, {
+                onSuccess: () => {
+                    alert('Payment was successful');
+                    processPayment();
+                },
+                onError: (errors) => {
+                    alert(errors.error);
+                }
+            });
         }
-    }
+    },
+
 };
 </script>

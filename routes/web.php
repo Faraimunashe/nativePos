@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Config\EnvConfigController;
+use App\Http\Controllers\EFTController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -25,7 +26,7 @@ Route::middleware(['api.auth','configs'])->group(function () {
     Route::get('/pos', [PosController::class, 'index']);
 
     Route::post('/cash', [PosController::class, 'store']);
-
+    Route::post('/card', [EFTController::class, 'store']);
 
 
 });

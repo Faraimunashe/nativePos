@@ -83,6 +83,8 @@
         :totalPrice="totalPrice"
         :conversionRate="conversionRate"
         :selectedCurrency="selectedCurrency"
+        :cart="cart"
+        :eftCode="currencyEftCode"
         @close="showCardModal = false"
     />
 </template>
@@ -115,10 +117,12 @@ export default {
         const change = ref(0);
         const snackbar = useSnackbar();
         const showCardModal = ref(false);
+        const currencyEftCode = ref("840");
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
             conversionRate.value = currency ? currency.conversion_rate : 1;
+            currencyEftCode.value = currency ? currency.eft_code : "840";
         };
 
         const addToCart = (item) => {

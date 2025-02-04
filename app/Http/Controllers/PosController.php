@@ -24,7 +24,8 @@ class PosController extends Controller
             $query_params['search'] = $request->search;
         }
 
-        $response = Http::withToken($token)->get('http://127.0.0.1:8080/api/v1/items', $query_params);
+        $url = base_url() . '/items';
+        $response = Http::withToken($token)->get($url, $query_params);
 
         if ($response->successful()) {
             $data = $response->json();
@@ -69,12 +70,13 @@ class PosController extends Controller
             ]);
 
             $token = Session::get('api_token');
+            $url = base_url() . '/sales';
 
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $token,
-            ])->post('http://127.0.0.1:8080/api/v1/sales', $validated_data);
+            ])->post($url, $validated_data);
 
             if ($response->successful()) {
                 return back()->with(['success' => 'Sale recorded successfully']);
