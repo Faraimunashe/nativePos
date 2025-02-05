@@ -35,7 +35,9 @@ class PosController extends Controller
 
         return inertia("PosPage", [
             'items' => $items,
-            'currencies' => $currencies
+            'currencies' => $currencies,
+            'terminal' => get_terminal_id(),
+            'location' => get_location()
         ]);
     }
 
@@ -79,7 +81,13 @@ class PosController extends Controller
             ])->post($url, $validated_data);
 
             if ($response->successful()) {
-                return back()->with(['success' => 'Sale recorded successfully']);
+                $data = $response->json();
+
+                //dd($data);
+                return back()->with([
+                    'success' => 'Sale recorded successfully',
+                    'sale' => $data
+                ]);
             } else {
                 return back()->withErrors(['error' => 'API Error: ' . $response->body()]);
             }

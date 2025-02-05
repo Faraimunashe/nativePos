@@ -60,6 +60,7 @@ class EFTController extends Controller
 
 
         try {
+            set_time_limit(90);
             $eft = EFTService::getInstance();
             $eft->initializeConnection();
             $eft_response = $eft->sendXMLMessage($xml, $currency);

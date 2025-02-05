@@ -32,14 +32,9 @@
             </div>
             <div class="text-lg font-bold text-gray-800 mt-4">Total: {{ selectedCurrency }} {{ (totalPrice * conversionRate).toFixed(2) }}</div>
             <div class="grid grid-cols-1 gap-2 mt-4 flex-shrink-0">
-                <div class="flex flex-col gap-2">
-                    <button v-if="enabled_payments == 'CASH' || enabled_payments == 'BOTH'" class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="openCashModal">Cash Payment</button>
-                    <button v-if="enabled_payments == 'CARD' || enabled_payments == 'BOTH'" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" @click="showCardModal = true">Card Payment</button>
-                </div>
-                <div class="flex gap-2">
-                    <button class="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 w-full" @click="specialSale">Special Sale</button>
-                    <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 w-full" @click="resetCart">Reset</button>
-                </div>
+                <button class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="openCashModal">Cash Payment</button>
+                <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" @click="showCardModal = true">Card Payment</button>
+                <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600" @click="resetCart">Reset Cart</button>
             </div>
         </div>
     </div>
@@ -80,7 +75,7 @@
                 <input type="text" :value="selectedCurrency" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
             </div>
             <div class="flex justify-between mt-4">
-                <button @click="processCardPayment" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Process Payment</button>
+                <button @click="processCardPayment" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Pay Now</button>
                 <button @click="showCardModal = false" class="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500">Cancel</button>
             </div>
         </div>
@@ -89,7 +84,7 @@
 <script>
 import { ref, computed, watch, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
-import Layout from "../Shared/Layout.vue";
+import Layout from "../../Shared/Layout.vue";
 import { useSnackbar } from "vue3-snackbar";
 
 export default {
@@ -99,11 +94,6 @@ export default {
         currencies: Array,
         terminal: String,
         location: String
-    },
-    computed: {
-        enabled_payments() {
-            return this.$page.props.auth.env.enabled_payments
-        },
     },
     setup(props) {
         const search = ref("");
@@ -159,74 +149,6 @@ export default {
             change.value = Math.max(cashReceived.value - total, 0);
         };
 
-        const printReceipt = (data) => {
-            let receiptContent = `
-                <div style="width: 300px; font-family: Arial, sans-serif; font-size: 9px; padding: 5px;">
-                    <div style="text-align: center;">
-                        <h3 style="margin: 2px;">Midlands State University</h3>
-                        <h4 style="margin: 2px;">Canteen Shop</h4>
-                    </div>
-
-                    <p><strong>Sale Ref:</strong> ${data.saleRef}</p>
-                    <p><strong>Cashier:</strong> ${data.cashierName}</p>
-                    <p><strong>Trans:</strong> ${data.type}</p>
-                    <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-
-                    <hr>
-
-                    <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
-                        <thead>
-                            <tr>
-                                <th style="text-align: left;">Item</th>
-                                <th style="text-align: center;">Qty</th>
-                                <th style="text-align: right;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.items.map(item => `
-                                <tr>
-                                    <td>${item.item_id}</td>
-                                    <td style="text-align: center;">x${item.qty}</td>
-                                    <td style="text-align: right;">${data.currency} ${item.total_price.toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-
-                    <hr>
-
-                    <p><strong>Total:</strong> ${data.currency} ${data.amount.toFixed(2)}</p>
-                    <p><strong>Amount Paid:</strong> ${data.currency} ${data.cash.toFixed(2)}</p>
-                    <p><strong>Change:</strong> ${data.currency} ${data.change.toFixed(2)}</p>
-
-                    <hr>
-
-                    <p style="text-align: center;">Thank you for shopping with us!</p>
-                </div>
-            `;
-
-            let printWindow = window.open('', '', 'width=400,height=600');
-            printWindow.document.write('<html><head><title>Receipt</title><style>');
-            printWindow.document.write(`
-                body { font-family: Arial, sans-serif; font-size: 9px; padding: 10px; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { padding: 3px; }
-            `);
-            printWindow.document.write('</style></head><body>');
-            printWindow.document.write(receiptContent);
-            printWindow.document.write(`
-                <script>
-                    setTimeout(() => {
-                        window.print();
-                        window.onafterprint = () => window.close();
-                    }, 500);
-                <\/script>
-            `);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-        };
-
-
         const processCashPayment = () => {
             if (cashReceived.value < totalPrice.value * conversionRate.value) {
                 alert("Insufficient cash received!");
@@ -252,7 +174,6 @@ export default {
             router.post("/cash", paymentData, {
                 onSuccess: () => {
                     snackbar.add({ type: 'success', text: 'Payment was successful' });
-                    printReceipt(paymentData)
                     resetCart();
                     closeCashModal();
                 },

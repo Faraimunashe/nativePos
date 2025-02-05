@@ -2,7 +2,7 @@
     <div class="bg-white shadow-md p-4 flex justify-between items-center mb-6 rounded-lg">
         <div>
             <h2 class="text-lg font-semibold">MSU CANTEEN POS</h2>
-            <p class="text-gray-600">Location: Main Branch | Terminal ID: 12345</p>
+            <p class="text-gray-600">Location: {{ location }} | Terminal ID: {{ terminal }}</p>
         </div>
 
         <nav class="flex space-x-6">
@@ -44,7 +44,9 @@ import { ref, computed } from 'vue';
 
 export default {
     props: {
-        username: String
+        username: String,
+        location: String,
+        terminal: String
     },
     data() {
         return {

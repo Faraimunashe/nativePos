@@ -32,34 +32,49 @@ class EnvConfigController extends Controller
      */
     public function store(Request $request)
     {
-        try{
+        try {
             $request->validate([
-                'server_ip' => ['required','url'],
-                'server_version' => ['required','string'],
-                'default_currency' => ['required','string'],
-                'enabled_payments'=> ['required','string'],
-                'socket_ip'=> ['required','string'],
-                'socket_port'=> ['required','string'],
-                'location'=> ['required','string'],
-                'terminal'=> ['required','string'],
+                'server_ip' => ['required', 'url'],
+                'server_version' => ['required', 'string'],
+                'default_currency' => ['required', 'string'],
+                'enabled_payments'=> ['required', 'string'],
+                'socket_ip'=> ['required', 'string'],
+                'socket_port'=> ['required', 'string'],
+                'location'=> ['required', 'string'],
+                'terminal'=> ['required', 'string'],
             ]);
 
-            $env = new Environment();
-            $env->server_ip = $request->server_ip;
-            $env->server_version = $request->server_version;
-            $env->default_currency = $request->default_currency;
-            $env->enabled_payments = $request->enabled_payments;
-            $env->socket_ip = $request->socket_ip;
-            $env->socket_port = $request->socket_port;
-            $env->location = $request->location;
-            $env->terminal = $request->terminal;
-            $env->save();
+            $env = Environment::first();
+
+            if ($env) {
+                $env->server_ip = $request->server_ip;
+                $env->server_version = $request->server_version;
+                $env->default_currency = $request->default_currency;
+                $env->enabled_payments = $request->enabled_payments;
+                $env->socket_ip = $request->socket_ip;
+                $env->socket_port = $request->socket_port;
+                $env->location = $request->location;
+                $env->terminal = $request->terminal;
+                $env->save();
+            } else {
+                $env = new Environment();
+                $env->server_ip = $request->server_ip;
+                $env->server_version = $request->server_version;
+                $env->default_currency = $request->default_currency;
+                $env->enabled_payments = $request->enabled_payments;
+                $env->socket_ip = $request->socket_ip;
+                $env->socket_port = $request->socket_port;
+                $env->location = $request->location;
+                $env->terminal = $request->terminal;
+                $env->save();
+            }
 
             return back()->with(['success' => 'Environment configurations saved successfully']);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
+
 
     /**
      * Display the specified resource.
