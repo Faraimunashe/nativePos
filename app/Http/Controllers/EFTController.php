@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\FailEft;
 use App\Services\EFTService;
+use App\Services\PrintReceipt;
 use App\Services\ResponseCodeMapper;
 use App\Services\StanGenerator;
+use Carbon\Carbon;
 use Exception;
 use Http;
 use Illuminate\Http\Request;
@@ -14,11 +16,17 @@ use SimpleXMLElement;
 
 class EFTController extends Controller
 {
+    protected $receipt;
+
+    // Inject the ReceiptService into the controller
+    public function __construct(PrintReceipt $receipt)
+    {
+        $this->receipt = $receipt;
+    }
 
     public function store(Request $request)
     {
-        //dd($request->all());
-        $validated_data = $request->validate([
+        $request->validate([
             "amount" => ["required","numeric", 'min:0'],
             "type" => ["required","string","in:CASH,EFT"],
             "currency" => ["required","string","max:3", "min:3"],
@@ -49,7 +57,6 @@ class EFTController extends Controller
         }elseif($currency == "ZIG") {
             $eft_currency = "924";
         }
-        //$eft_currency = "932";
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
                 '<Esp:Interface xmlns:Esp="http://www.mosaicsoftware.com/Postilion/eSocket.POS/" Version="1.0">' . "\n" .
@@ -93,9 +100,14 @@ class EFTController extends Controller
                 ])->post($url, $sale_data);
 
                 if ($response->successful()) {
-                    $resp = $response->json();
+                    $data = $response->json();
+                    $sale = $data['sale'];
 
-                    //dd($resp);
+                    $cashier_name = Session::get('user')['name'];
+                    $datetime = Carbon::parse('2025-02-06T12:16:59.701312Z')->setTimezone('UTC')->toDateTimeString();
+
+                    $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], 0, 0);
+
                     return back()->with(['success' => 'Transaction sent successfully']);
                 } else {
                     //dd($response->body());

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PrintReceipt;
+use Carbon\Carbon;
 use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -9,6 +11,13 @@ use Session;
 
 class PosController extends Controller
 {
+    protected $receipt;
+
+    // Inject the ReceiptService into the controller
+    public function __construct(PrintReceipt $receipt)
+    {
+        $this->receipt = $receipt;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -56,6 +65,10 @@ class PosController extends Controller
     {
         try{
 
+            //dd();
+
+            //dd(getenv('USERPROFILE'));
+
             $validated_data = $request->validate([
                 "amount" => ["required","numeric", 'min:0'],
                 "type" => ["required","string","in:CASH,EFT"],
@@ -82,11 +95,15 @@ class PosController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
+                $sale = $data['sale'];
 
-                //dd($data);
+                $cashier_name = Session::get('user')['name'];
+                $datetime = Carbon::parse('2025-02-06T12:16:59.701312Z')->setTimezone('UTC')->toDateTimeString();
+
+                $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
+
                 return back()->with([
-                    'success' => 'Sale recorded successfully',
-                    'sale' => $data
+                    'success' => 'Sale recorded successfully'
                 ]);
             } else {
                 return back()->withErrors(['error' => 'API Error: ' . $response->body()]);

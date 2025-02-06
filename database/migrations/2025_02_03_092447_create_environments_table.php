@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('socket_port')->default('23001');
             $table->string('location')->default('Development Desk');
             $table->string('terminal')->default('ESADZA01');
+            $table->string('printer')->default('Microsoft Print to PDF');
             $table->timestamps();
         });
     }

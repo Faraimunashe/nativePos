@@ -41,6 +41,13 @@ function get_location()
     return $location;
 }
 
+function get_selected_printer()
+{
+    $env = Environment::first();
+    $printer = $env->printer;
+    return $printer;
+}
+
 function convert_minor($amount) {
     $amount = floatval($amount);
     return round($amount * 100);
@@ -49,4 +56,19 @@ function convert_minor($amount) {
 function convert_major($amount) {
     $amount = intval($amount);
     return number_format($amount / 100, 2, '.', '');
+}
+
+function connected_printers(){
+    exec('wmic printer list brief', $output);
+
+    $printer_names = [];
+
+    foreach ($output as $line) {
+        if (preg_match('/^\s*(\S.*\S)\s+\d+/', $line, $matches)) {
+            $name = preg_replace('/\s+\d+$/', '', $matches[1]);
+            $printer_names[] = trim($name);
+        }
+    }
+
+    return $printer_names;
 }

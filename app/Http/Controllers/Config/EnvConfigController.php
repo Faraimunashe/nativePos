@@ -14,8 +14,11 @@ class EnvConfigController extends Controller
      */
     public function index()
     {
+        $printers = connected_printers();
+
         return inertia("ConfigPage", [
-            "config" => Environment::first()
+            "config" => Environment::first(),
+            "printers" => $printers
         ]);
     }
 
@@ -42,6 +45,7 @@ class EnvConfigController extends Controller
                 'socket_port'=> ['required', 'string'],
                 'location'=> ['required', 'string'],
                 'terminal'=> ['required', 'string'],
+                'selected_printer' => ['required', 'string']
             ]);
 
             $env = Environment::first();
@@ -55,6 +59,7 @@ class EnvConfigController extends Controller
                 $env->socket_port = $request->socket_port;
                 $env->location = $request->location;
                 $env->terminal = $request->terminal;
+                $env->printer = $request->selected_printer;
                 $env->save();
             } else {
                 $env = new Environment();
@@ -66,6 +71,7 @@ class EnvConfigController extends Controller
                 $env->socket_port = $request->socket_port;
                 $env->location = $request->location;
                 $env->terminal = $request->terminal;
+                $env->printer = $request->selected_printer;
                 $env->save();
             }
 

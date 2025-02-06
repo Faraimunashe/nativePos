@@ -13,6 +13,7 @@
                     <p class="text-gray-600"><strong class="text-gray-800">Socket Port:</strong> {{ form.socket_port }}</p>
                     <p class="text-gray-600"><strong class="text-gray-800">Location:</strong> {{ form.location }}</p>
                     <p class="text-gray-600"><strong class="text-gray-800">Terminal:</strong> {{ form.terminal }}</p>
+                    <p class="text-gray-600"><strong class="text-gray-800">Printer:</strong> {{ form.selected_printer }}</p>
                 </div>
                 <button @click="isEditing = true" class="mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">Edit</button>
             </div>
@@ -27,6 +28,12 @@
                         <input v-model="form.socket_port" class="input-field" placeholder="Socket Port" />
                         <input v-model="form.location" class="input-field" placeholder="Location" />
                         <input v-model="form.terminal" class="input-field" placeholder="Terminal" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <label for="printer" class="text-gray-800">Select Printer:</label>
+                        <select v-model="form.selected_printer" id="printer" class="input-field">
+                            <option v-for="printer in printers" :key="printer" :value="printer">{{ printer }}</option>
+                        </select>
                     </div>
                     <div class="flex gap-4">
                         <button type="submit" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow">Save</button>
@@ -48,6 +55,12 @@
                     <input v-model="form.location" class="input-field" placeholder="Location" />
                     <input v-model="form.terminal" class="input-field" placeholder="Terminal" />
                 </div>
+                <div class="grid grid-cols-2 gap-6">
+                    <label for="printer" class="text-gray-800">Select Printer:</label>
+                    <select v-model="form.selected_printer" id="printer" class="input-field">
+                        <option v-for="printer in printers" :key="printer" :value="printer">{{ printer }}</option>
+                    </select>
+                </div>
                 <button type="submit" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow">Save</button>
             </form>
         </div>
@@ -63,7 +76,8 @@ import { useForm } from '@inertiajs/vue3';
 
 export default defineComponent({
     props: {
-        config: Object
+        config: Object,
+        printers: Array
     },
     setup(props) {
         const isEditing = ref(false);
@@ -76,6 +90,7 @@ export default defineComponent({
             socket_port: props.config?.socket_port || '23001',
             location: props.config?.location || 'Development Desk',
             terminal: props.config?.terminal || 'ESADZA01',
+            selected_printer: props.config?.printer || '', // New property for selected printer
         });
 
         const hasConfig = computed(() => !!props.config);

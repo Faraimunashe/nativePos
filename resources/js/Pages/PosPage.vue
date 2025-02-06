@@ -252,7 +252,7 @@ export default {
             router.post("/cash", paymentData, {
                 onSuccess: () => {
                     snackbar.add({ type: 'success', text: 'Payment was successful' });
-                    printReceipt(paymentData)
+                    //printReceipt(paymentData)
                     resetCart();
                     closeCashModal();
                 },
