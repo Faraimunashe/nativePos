@@ -159,74 +159,6 @@ export default {
             change.value = Math.max(cashReceived.value - total, 0);
         };
 
-        const printReceipt = (data) => {
-            let receiptContent = `
-                <div style="width: 300px; font-family: Arial, sans-serif; font-size: 9px; padding: 5px;">
-                    <div style="text-align: center;">
-                        <h3 style="margin: 2px;">Midlands State University</h3>
-                        <h4 style="margin: 2px;">Canteen Shop</h4>
-                    </div>
-
-                    <p><strong>Sale Ref:</strong> ${data.saleRef}</p>
-                    <p><strong>Cashier:</strong> ${data.cashierName}</p>
-                    <p><strong>Trans:</strong> ${data.type}</p>
-                    <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-
-                    <hr>
-
-                    <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
-                        <thead>
-                            <tr>
-                                <th style="text-align: left;">Item</th>
-                                <th style="text-align: center;">Qty</th>
-                                <th style="text-align: right;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.items.map(item => `
-                                <tr>
-                                    <td>${item.item_id}</td>
-                                    <td style="text-align: center;">x${item.qty}</td>
-                                    <td style="text-align: right;">${data.currency} ${item.total_price.toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-
-                    <hr>
-
-                    <p><strong>Total:</strong> ${data.currency} ${data.amount.toFixed(2)}</p>
-                    <p><strong>Amount Paid:</strong> ${data.currency} ${data.cash.toFixed(2)}</p>
-                    <p><strong>Change:</strong> ${data.currency} ${data.change.toFixed(2)}</p>
-
-                    <hr>
-
-                    <p style="text-align: center;">Thank you for shopping with us!</p>
-                </div>
-            `;
-
-            let printWindow = window.open('', '', 'width=400,height=600');
-            printWindow.document.write('<html><head><title>Receipt</title><style>');
-            printWindow.document.write(`
-                body { font-family: Arial, sans-serif; font-size: 9px; padding: 10px; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { padding: 3px; }
-            `);
-            printWindow.document.write('</style></head><body>');
-            printWindow.document.write(receiptContent);
-            printWindow.document.write(`
-                <script>
-                    setTimeout(() => {
-                        window.print();
-                        window.onafterprint = () => window.close();
-                    }, 500);
-                <\/script>
-            `);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-        };
-
-
         const processCashPayment = () => {
             if (cashReceived.value < totalPrice.value * conversionRate.value) {
                 alert("Insufficient cash received!");
@@ -239,6 +171,7 @@ export default {
                 currency: selectedCurrency.value,
                 items: cart.value.map(item => ({
                     item_id: item.id,
+                    name: item.name,
                     qty: item.quantity,
                     price: item.price * conversionRate.value,
                     total_price: (item.price * conversionRate.value) * item.quantity
@@ -278,6 +211,7 @@ export default {
                 currency: selectedCurrency.value,
                 items: cart.value.map(item => ({
                     item_id: item.id,
+                    name: item.name,
                     qty: item.quantity,
                     price: item.price * conversionRate.value,
                     total_price: (item.price * conversionRate.value) * item.quantity

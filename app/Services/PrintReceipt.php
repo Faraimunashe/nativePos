@@ -35,17 +35,17 @@ class PrintReceipt
             $printer->text("------------------------------\n");
 
             foreach ($items as $item) {
-                $printer->text($item['item_id'] . " x" . $item['qty'] . "  " . $currency . number_format($item['total_price'], 2) . "\n");
+                $printer->text($item['name'] . " x" . $item['qty'] . "  " . $currency . number_format($item['total_price'], 2) . "\n");
             }
             $printer->text("------------------------------\n");
 
             $printer->setEmphasis(true);
             $printer->text("Total: " . $currency . number_format($total_amount, 2) . "\n");
             $printer->setEmphasis(false);
-
-            $printer->text("Amount Paid: " . $currency . number_format($amount_paid, 2) . "\n");
-            $printer->text("Change: " . $currency . number_format($change, 2) . "\n");
-
+            if($transaction_source == "CASH") {
+                $printer->text("Amount Paid: " . $currency . number_format($amount_paid, 2) . "\n");
+                $printer->text("Change: " . $currency . number_format($change, 2) . "\n");
+            }
             $printer->feed(3);
             $printer->cut();
             $printer->close();
@@ -68,12 +68,14 @@ class PrintReceipt
         $content .= "------------------------------\n";
 
         foreach ($items as $item) {
-            $content .= $item['item_id'] . " x" . $item['qty'] . "  " . $currency . number_format($item['total_price'], 2) . "\n";
+            $content .= $item['name'] . " x" . $item['qty'] . "  " . $currency . number_format($item['total_price'], 2) . "\n";
         }
         $content .= "------------------------------\n";
         $content .= "Total: " . $currency . number_format($total_amount, 2) . "\n";
-        $content .= "Amount Paid: " . $currency . number_format($amount_paid, 2) . "\n";
-        $content .= "Change: " . $currency . number_format($change, 2) . "\n";
+        if($transaction_source == "CASH"){
+            $content .= "Amount Paid: " . $currency . number_format($amount_paid, 2) . "\n";
+            $content .= "Change: " . $currency . number_format($change, 2) . "\n";
+        }
 
         file_put_contents($filePath, $content);
     }
