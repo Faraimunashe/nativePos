@@ -232,12 +232,17 @@ class EFTService
 
     private function sendXML(string $xml)
     {
-        $xmlBytes = mb_convert_encoding($xml, 'UTF-8');
-        $length = strlen($xmlBytes);
-        $header = pack("n", $length); // 2-byte header
+        try{
 
-        fwrite($this->socket, $header . $xmlBytes);
-        fflush($this->socket);
+            $xmlBytes = mb_convert_encoding($xml, 'UTF-8');
+            $length = strlen($xmlBytes);
+            $header = pack("n", $length); // 2-byte header
+
+            fwrite($this->socket, $header . $xmlBytes);
+            fflush($this->socket);
+        }catch(Exception $e){
+            error_log($e->getMessage());
+        }
     }
 
     private function receiveAndCheckResponse(): bool

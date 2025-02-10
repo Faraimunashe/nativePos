@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\EFTService;
 use App\Services\PrintReceipt;
 use Carbon\Carbon;
 use Http;
@@ -23,6 +24,9 @@ class PosController extends Controller
      */
     public function index(Request $request)
     {
+        $eft = EFTService::getInstance();
+        $eft->initializeConnection();
+
         $search =  $request->search;
         $token = Session::get('api_token');
         $items = [];
@@ -38,6 +42,7 @@ class PosController extends Controller
 
         if ($response->successful()) {
             $data = $response->json();
+            //dd($data);
             $items = $data['data'];
             $currencies = $data['rates'];
         }
@@ -64,11 +69,7 @@ class PosController extends Controller
     public function store(Request $request)
     {
         try{
-
-            //dd();
-
-            //dd(getenv('USERPROFILE'));
-
+            //sleep(10);
             $validated_data = $request->validate([
                 "amount" => ["required","numeric", 'min:0'],
                 "type" => ["required","string","in:CASH,EFT"],
@@ -98,10 +99,12 @@ class PosController extends Controller
                 $sale = $data['sale'];
 
                 $cashier_name = Session::get('user')['name'];
-                $datetime = Carbon::parse('2025-02-06T12:16:59.701312Z')->setTimezone('UTC')->toDateTimeString();
+                //dd($sale['created_at']);
+                $datetime = Carbon::parse($sale['created_at'])->setTimezone('UTC')->toDateTimeString();
 
-                $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
+                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
 
+                //dd($receipt);
                 return back()->with([
                     'success' => 'Sale recorded successfully'
                 ]);

@@ -90,7 +90,7 @@ export default defineComponent({
             socket_port: props.config?.socket_port || '23001',
             location: props.config?.location || 'Development Desk',
             terminal: props.config?.terminal || 'ESADZA01',
-            selected_printer: props.config?.printer || '', // New property for selected printer
+            selected_printer: props.config?.printer || '',
         });
 
         const hasConfig = computed(() => !!props.config);

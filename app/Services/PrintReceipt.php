@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Mike42\Escpos\EscposImage;
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 
@@ -18,8 +19,9 @@ class PrintReceipt
                 return "Receipt saved as text file!";
             }
 
-            $connector = new WindowsPrintConnector($selected_printer);
+            $connector = new WindowsPrintConnector("EPSONTMT20IIIReceipt");
             $printer = new Printer($connector);
+
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->setEmphasis(true);
             $printer->text("Midlands State University\n");

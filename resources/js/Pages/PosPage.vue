@@ -61,7 +61,9 @@
                 <input type="text" :value="change.toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
             </div>
             <div class="flex justify-between mt-4">
-                <button @click="processCashPayment" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Process Payment</button>
+                <button @click="processCashPayment" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                    Process Payment {{ loading }}
+                </button>
                 <button @click="closeCashModal" class="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500">Cancel</button>
             </div>
         </div>
@@ -116,6 +118,7 @@ export default {
         const snackbar = useSnackbar();
         const showCardModal = ref(false);
         const currencyEftCode = ref("840");
+        let loading = ref(false);
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
@@ -145,9 +148,13 @@ export default {
         });
 
         const openCashModal = () => {
-            showCashModal.value = true;
-            cashReceived.value = 0;
-            change.value = 0;
+            if(totalPrice.value > 0){
+                showCashModal.value = true;
+                cashReceived.value = 0;
+                change.value = 0;
+            }else{
+                snackbar.add({ type: 'error', text: 'Cart cannot be empty' });
+            }
         };
 
         const closeCashModal = () => {
@@ -159,9 +166,11 @@ export default {
             change.value = Math.max(cashReceived.value - total, 0);
         };
 
-        const processCashPayment = () => {
+        const processCashPayment = async () => {
+
             if (cashReceived.value < totalPrice.value * conversionRate.value) {
-                alert("Insufficient cash received!");
+
+                snackbar.add({ type: 'error', text: 'Insufficient cash received' });
                 return;
             }
 
@@ -184,19 +193,24 @@ export default {
 
             router.post("/cash", paymentData, {
                 onSuccess: () => {
+
                     snackbar.add({ type: 'success', text: 'Payment was successful' });
-                    //printReceipt(paymentData)
                     resetCart();
                     closeCashModal();
                 },
                 onError: (errors) => {
+
                     snackbar.add({ type: 'error', text: errors.error });
                 }
             });
         };
 
         const payWithCard = () => {
-            showCardModal.value = true;
+            if(totalPrice.value > 0){
+                showCardModal.value = true;
+            }else{
+                snackbar.add({ type: 'error', text: 'Cart cannot be empty' });
+            }
         };
 
         const closeCardModal = () => {
@@ -204,6 +218,10 @@ export default {
         };
 
         const processCardPayment = () => {
+            if(totalPrice.value < 0){
+                snackbar.add({ type: 'error', text: 'Amount cannot be null' });
+                return;
+            }
             const paymentData = {
                 amount: totalPrice.value * conversionRate.value,
                 type: "EFT",
@@ -264,6 +282,6 @@ export default {
             showCardModal,
             updatePrices
         };
-    }
+    },
 };
 </script>
