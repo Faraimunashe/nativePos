@@ -19,7 +19,7 @@ class PrintReceipt
                 return "Receipt saved as text file!";
             }
 
-            $connector = new WindowsPrintConnector("EPSONTMT20IIIReceipt");
+            $connector = new WindowsPrintConnector($selected_printer);
             $printer = new Printer($connector);
 
             $printer->setJustification(Printer::JUSTIFY_CENTER);

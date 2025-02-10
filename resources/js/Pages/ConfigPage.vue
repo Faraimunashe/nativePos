@@ -28,12 +28,7 @@
                         <input v-model="form.socket_port" class="input-field" placeholder="Socket Port" />
                         <input v-model="form.location" class="input-field" placeholder="Location" />
                         <input v-model="form.terminal" class="input-field" placeholder="Terminal" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-6">
-                        <label for="printer" class="text-gray-800">Select Printer:</label>
-                        <select v-model="form.selected_printer" id="printer" class="input-field">
-                            <option v-for="printer in printers" :key="printer" :value="printer">{{ printer }}</option>
-                        </select>
+                        <input v-model="form.selected_printer" class="input-field" placeholder="Shared printer name" />
                     </div>
                     <div class="flex gap-4">
                         <button type="submit" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow">Save</button>
@@ -54,12 +49,7 @@
                     <input v-model="form.socket_port" class="input-field" placeholder="Socket Port" />
                     <input v-model="form.location" class="input-field" placeholder="Location" />
                     <input v-model="form.terminal" class="input-field" placeholder="Terminal" />
-                </div>
-                <div class="grid grid-cols-2 gap-6">
-                    <label for="printer" class="text-gray-800">Select Printer:</label>
-                    <select v-model="form.selected_printer" id="printer" class="input-field">
-                        <option v-for="printer in printers" :key="printer" :value="printer">{{ printer }}</option>
-                    </select>
+                    <input v-model="form.selected_printer" class="input-field" placeholder="Shared printer name" />
                 </div>
                 <button type="submit" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow">Save</button>
             </form>
@@ -90,7 +80,7 @@ export default defineComponent({
             socket_port: props.config?.socket_port || '23001',
             location: props.config?.location || 'Development Desk',
             terminal: props.config?.terminal || 'ESADZA01',
-            selected_printer: props.config?.printer || '',
+            selected_printer: props.config?.printer || 'Microsoft Print to PDF',
         });
 
         const hasConfig = computed(() => !!props.config);

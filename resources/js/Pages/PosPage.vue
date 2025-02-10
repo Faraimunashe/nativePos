@@ -35,11 +35,13 @@
                 <div class="flex flex-col gap-2">
                     <button v-if="enabled_payments == 'CASH' || enabled_payments == 'BOTH'" class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="openCashModal">Cash Payment</button>
                     <button v-if="enabled_payments == 'CARD' || enabled_payments == 'BOTH'" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" @click="showCardModal = true">Card Payment</button>
+
+                    <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600" @click="resetCart">Reset</button>
                 </div>
-                <div class="flex gap-2">
+                <!-- <div class="flex gap-2">
                     <button class="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 w-full" @click="specialSale">Special Sale</button>
                     <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 w-full" @click="resetCart">Reset</button>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
@@ -48,21 +50,29 @@
     <div v-if="showCashModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 class="text-xl font-bold mb-4">Cash Payment</h2>
-            <div class="mb-4">
-                <label class="block text-gray-700 font-semibold mb-2">Total Amount</label>
-                <input type="text" :value="(totalPrice * conversionRate).toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+            <div v-if="loading" class="flex items-center justify-center">
+                <div class="w-10 h-10 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 font-semibold mb-2">Cash Received</label>
-                <input type="number" v-model="cashReceived" @input="calculateChange" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div v-if="!loading">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Total Amount</label>
+                    <input type="text" :value="(totalPrice * conversionRate).toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Cash Received</label>
+                    <input type="number" :disabled="loading" v-model="cashReceived" @input="calculateChange" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Change</label>
+                    <input type="text" :value="change.toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 font-semibold mb-2">Change</label>
-                <input type="text" :value="change.toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+            <div v-if="loading" class="flex justify-between mt-4 text-yellow-500 text-bold">
+                Wait, don't close! Payment is processing ...
             </div>
-            <div class="flex justify-between mt-4">
-                <button @click="processCashPayment" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
-                    Process Payment {{ loading }}
+            <div v-else class="flex justify-between mt-4">
+                <button @click="processCashPayment" :disabled="loading" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                    Process Payment
                 </button>
                 <button @click="closeCashModal" class="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500">Cancel</button>
             </div>
@@ -73,16 +83,26 @@
     <div v-if="showCardModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 class="text-xl font-bold mb-4">Card Payment</h2>
-            <div class="mb-4">
-                <label class="block text-gray-700 font-semibold mb-2">Total Amount</label>
-                <input type="text" :value="(totalPrice * conversionRate).toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+            <div v-if="loading" class="flex items-center justify-center">
+                <div class="w-10 h-10 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 font-semibold mb-2">Selected Currency</label>
-                <input type="text" :value="selectedCurrency" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+            <div v-if="!loading">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Total Amount</label>
+                    <input type="text" :value="(totalPrice * conversionRate).toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Selected Currency</label>
+                    <input type="text" :value="selectedCurrency" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+                </div>
             </div>
-            <div class="flex justify-between mt-4">
-                <button @click="processCardPayment" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Process Payment</button>
+            <div v-if="loading" class="flex justify-between mt-4 text-yellow-500 text-bold">
+                Wait, don't close! Payment is processing ...
+            </div>
+            <div v-else class="flex justify-between mt-4">
+                <button @click="processCardPayment" :disabled="loading" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                    Process Payment
+                </button>
                 <button @click="showCardModal = false" class="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500">Cancel</button>
             </div>
         </div>
@@ -90,7 +110,7 @@
 </template>
 <script>
 import { ref, computed, watch, onMounted } from "vue";
-import { router } from "@inertiajs/vue3";
+import { useForm, router } from "@inertiajs/vue3";
 import Layout from "../Shared/Layout.vue";
 import { useSnackbar } from "vue3-snackbar";
 
@@ -104,7 +124,7 @@ export default {
     },
     computed: {
         enabled_payments() {
-            return this.$page.props.auth.env.enabled_payments
+            return this.$page.props.auth.env.enabled_payments;
         },
     },
     setup(props) {
@@ -118,7 +138,7 @@ export default {
         const snackbar = useSnackbar();
         const showCardModal = ref(false);
         const currencyEftCode = ref("840");
-        let loading = ref(false);
+        const loading = ref(false);
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
@@ -148,11 +168,11 @@ export default {
         });
 
         const openCashModal = () => {
-            if(totalPrice.value > 0){
+            if (totalPrice.value > 0) {
                 showCashModal.value = true;
                 cashReceived.value = 0;
                 change.value = 0;
-            }else{
+            } else {
                 snackbar.add({ type: 'error', text: 'Cart cannot be empty' });
             }
         };
@@ -166,49 +186,70 @@ export default {
             change.value = Math.max(cashReceived.value - total, 0);
         };
 
+        // Initialize useForm for Cash Payment
+        const cashPaymentForm = useForm({
+            amount: 0,
+            type: "CASH",
+            currency: selectedCurrency.value,
+            items: [],
+            change: 0,
+            cash: 0,
+            terminal: props.terminal,
+            location: props.location,
+        });
+
         const processCashPayment = async () => {
-
             if (cashReceived.value < totalPrice.value * conversionRate.value) {
-
                 snackbar.add({ type: 'error', text: 'Insufficient cash received' });
                 return;
             }
 
-            const paymentData = {
-                amount: totalPrice.value * conversionRate.value,
-                type: "CASH",
-                currency: selectedCurrency.value,
-                items: cart.value.map(item => ({
-                    item_id: item.id,
-                    name: item.name,
-                    qty: item.quantity,
-                    price: item.price * conversionRate.value,
-                    total_price: (item.price * conversionRate.value) * item.quantity
-                })),
-                change: change.value,
-                cash: cashReceived.value,
-                terminal: props.terminal,
-                location: props.location
-            };
+            loading.value = true;
 
-            router.post("/cash", paymentData, {
+            cashPaymentForm.amount = totalPrice.value * conversionRate.value;
+            cashPaymentForm.currency = selectedCurrency.value;
+            cashPaymentForm.items = cart.value.map(item => ({
+                item_id: item.id,
+                name: item.name,
+                qty: item.quantity,
+                price: item.price * conversionRate.value,
+                total_price: (item.price * conversionRate.value) * item.quantity
+            }));
+            cashPaymentForm.change = change.value;
+            cashPaymentForm.cash = cashReceived.value;
+
+            cashPaymentForm.post("/cash", {
                 onSuccess: () => {
-
                     snackbar.add({ type: 'success', text: 'Payment was successful' });
                     resetCart();
                     closeCashModal();
                 },
                 onError: (errors) => {
-
                     snackbar.add({ type: 'error', text: errors.error });
+                },
+                onFinish: () => {
+                    loading.value = false;
                 }
             });
         };
 
+        // Initialize useForm for Card Payment
+        const cardPaymentForm = useForm({
+            amount: 0,
+            type: "EFT",
+            eft_code: currencyEftCode.value,
+            currency: selectedCurrency.value,
+            items: [],
+            change: 0,
+            cash: 0,
+            terminal: props.terminal,
+            location: props.location,
+        });
+
         const payWithCard = () => {
-            if(totalPrice.value > 0){
+            if (totalPrice.value > 0) {
                 showCardModal.value = true;
-            }else{
+            } else {
                 snackbar.add({ type: 'error', text: 'Cart cannot be empty' });
             }
         };
@@ -218,29 +259,24 @@ export default {
         };
 
         const processCardPayment = () => {
-            if(totalPrice.value < 0){
+            if (totalPrice.value <= 0) {
                 snackbar.add({ type: 'error', text: 'Amount cannot be null' });
                 return;
             }
-            const paymentData = {
-                amount: totalPrice.value * conversionRate.value,
-                type: "EFT",
-                eft_code: currencyEftCode.value,
-                currency: selectedCurrency.value,
-                items: cart.value.map(item => ({
-                    item_id: item.id,
-                    name: item.name,
-                    qty: item.quantity,
-                    price: item.price * conversionRate.value,
-                    total_price: (item.price * conversionRate.value) * item.quantity
-                })),
-                change: 0,
-                cash: 0,
-                terminal: props.terminal,
-                location: props.location
-            };
 
-            router.post("/card", paymentData, {
+            loading.value = true;
+
+            cardPaymentForm.amount = totalPrice.value * conversionRate.value;
+            cardPaymentForm.currency = selectedCurrency.value;
+            cardPaymentForm.items = cart.value.map(item => ({
+                item_id: item.id,
+                name: item.name,
+                qty: item.quantity,
+                price: item.price * conversionRate.value,
+                total_price: (item.price * conversionRate.value) * item.quantity
+            }));
+
+            cardPaymentForm.post("/card", {
                 onSuccess: () => {
                     snackbar.add({ type: 'success', text: 'Payment was successful' });
                     resetCart();
@@ -248,6 +284,9 @@ export default {
                 },
                 onError: (errors) => {
                     snackbar.add({ type: 'error', text: errors.error });
+                },
+                onFinish: () => {
+                    loading.value = false;
                 }
             });
         };
@@ -280,8 +319,10 @@ export default {
             totalPrice,
             showCashModal,
             showCardModal,
-            updatePrices
+            updatePrices,
+            loading
         };
     },
 };
 </script>
+
