@@ -100,7 +100,8 @@ class PosController extends Controller
 
                 $cashier_name = Session::get('user')['name'];
                 //dd($sale['created_at']);
-                $datetime = Carbon::parse($sale['created_at'])->setTimezone('UTC')->toDateTimeString();
+                $datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
+
 
                 $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
 

@@ -12,10 +12,11 @@ class PrintReceipt
     public function printReceipt($sale_ref, $cashier_name, $transaction_source, $sale_date_time, $items, $currency, $total_amount, $amount_paid, $change) {
         try {
             $selected_printer = get_selected_printer();
+            $location = get_location();
 
             if ($selected_printer == "OneNote (Desktop)" || $selected_printer == "Microsoft Print to PDF") {
                 $filePath = getenv('USERPROFILE').'\\Documents\\'. $sale_ref .'.txt';
-                $this->generateTextFile($filePath, $sale_ref, $cashier_name, $transaction_source, $sale_date_time, $items, $currency, $total_amount, $amount_paid, $change);
+                $this->generateTextFile($filePath, $sale_ref, $cashier_name, $transaction_source, $sale_date_time, $items, $currency, $total_amount, $amount_paid, $change, $location);
                 return "Receipt saved as text file!";
             }
 
@@ -33,6 +34,7 @@ class PrintReceipt
             $printer->text("Sale Ref: $sale_ref\n");
             $printer->text("Cashier: $cashier_name\n");
             $printer->text("Trans: $transaction_source\n");
+            $printer->text("Location: $location\n");
             $printer->text("Date: " . date('Y-m-d H:i:s', strtotime($sale_date_time)) . "\n");
             $printer->text("------------------------------\n");
 
@@ -58,7 +60,7 @@ class PrintReceipt
         }
     }
 
-    private function generateTextFile($filePath, $sale_ref, $cashier_name, $transaction_source, $sale_date_time, $items, $currency, $total_amount, $amount_paid, $change) {
+    private function generateTextFile($filePath, $sale_ref, $cashier_name, $transaction_source, $sale_date_time, $items, $currency, $total_amount, $amount_paid, $change, $location) {
         $content = "";
         $content .= "Midlands State University\n";
         $content .= "Canteen Shop\n";
@@ -66,6 +68,7 @@ class PrintReceipt
         $content .= "Sale Ref: $sale_ref\n";
         $content .= "Cashier: $cashier_name\n";
         $content .= "Trans: $transaction_source\n";
+        $content .= "location: $location\n";
         $content .= "Date: " . date('Y-m-d H:i:s', strtotime($sale_date_time)) . "\n";
         $content .= "------------------------------\n";
 

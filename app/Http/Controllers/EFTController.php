@@ -104,7 +104,8 @@ class EFTController extends Controller
                     $sale = $data['sale'];
 
                     $cashier_name = Session::get('user')['name'];
-                    $datetime = Carbon::parse('2025-02-06T12:16:59.701312Z')->setTimezone('UTC')->toDateTimeString();
+                    $datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
+
 
                     $this->receipt->printReceipt($sale['reference'], $cashier_name, "EFT", $datetime, $request->items, $sale['currency'], $sale['amount'], 0, 0);
 
