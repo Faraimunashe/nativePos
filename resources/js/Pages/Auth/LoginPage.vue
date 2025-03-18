@@ -38,10 +38,17 @@
                         <span v-else>Sign In</span>
                     </button>
                 </form>
+                <!-- Register link below the login form -->
+                <div class="text-center mt-4">
+                    <p class="text-gray-600">Want to modify configurations?
+                        <Link href="/configs" class="text-blue-600 hover:underline"> Configuration</Link>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 </template>
+
 
 <script setup>
 import { ref } from 'vue';

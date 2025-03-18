@@ -35,13 +35,11 @@
                 <div class="flex flex-col gap-2">
                     <button v-if="enabled_payments == 'CASH' || enabled_payments == 'BOTH'" class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="openCashModal">Cash Payment</button>
                     <button v-if="enabled_payments == 'CARD' || enabled_payments == 'BOTH'" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" @click="showCardModal = true">Card Payment</button>
-
-                    <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600" @click="resetCart">Reset</button>
                 </div>
-                <!-- <div class="flex gap-2">
-                    <button class="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 w-full" @click="specialSale">Special Sale</button>
+                <div class="flex gap-2">
+                    <button class="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 w-full" @click="openSpecialModal">Special Sale</button>
                     <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 w-full" @click="resetCart">Reset</button>
-                </div> -->
+                </div>
             </div>
         </div>
     </div>
@@ -107,6 +105,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Special Sale Modal -->
+    <div v-if="showSpecialSaleModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-xl font-bold mb-4">Special Sale Wizard</h2>
+            <div v-if="loading" class="flex items-center justify-center">
+                <div class="w-10 h-10 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+            <div v-if="!loading">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Meal Value</label>
+                    <input type="text" :value="(totalPrice * conversionRate).toFixed(2)" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Regnum/EC Number</label>
+                    <input type="text" :disabled="loading" v-model="consumer_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Consumer Pin</label>
+                    <input type="text" :disabled="loading" v-model="consumer_pin" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+            </div>
+            <div v-if="loading" class="flex justify-between mt-4 text-yellow-500 text-bold">
+                Wait, don't close! Special Sale is processing ...
+            </div>
+            <div v-else class="flex justify-between mt-4">
+                <button @click="processSpecialSale" :disabled="loading" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                    Process Sale
+                </button>
+                <button @click="closeSpecialModal" class="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500">Cancel</button>
+            </div>
+        </div>
+    </div>
 </template>
 <script>
 import { ref, computed, watch, onMounted } from "vue";
@@ -137,6 +168,7 @@ export default {
         const change = ref(0);
         const snackbar = useSnackbar();
         const showCardModal = ref(false);
+        const showSpecialSaleModal = ref(false);
         const currencyEftCode = ref("840");
         const loading = ref(false);
 
@@ -291,6 +323,61 @@ export default {
             });
         };
 
+        const openSpecialModal = () => {
+            if (totalPrice.value > 0) {
+                showSpecialSaleModal.value = true;
+                cashReceived.value = 0;
+                change.value = 0;
+            } else {
+                snackbar.add({ type: 'error', text: 'Cart cannot be empty' });
+            }
+        };
+
+        const closeSpecialModal = () => {
+            showSpecialSaleModal.value = false;
+        };
+
+        const specialForm = useForm({
+            amount: 0,
+            type: "SPECIAL",
+            currency: selectedCurrency.value,
+            items: [],
+            terminal: props.terminal,
+            location: props.location,
+            consumer_code: '',
+            consumer_pin: ''
+        });
+
+        const processSpecialSale = async () => {
+            loading.value = true;
+
+            specialForm.amount = totalPrice.value * conversionRate.value;
+            specialForm.currency = selectedCurrency.value;
+            specialForm.items = cart.value.map(item => ({
+                item_id: item.id,
+                name: item.name,
+                qty: item.quantity,
+                price: item.price * conversionRate.value,
+                total_price: (item.price * conversionRate.value) * item.quantity
+            }));
+            specialForm.change = change.value;
+            specialForm.cash = cashReceived.value;
+
+            specialForm.post("/special", {
+                onSuccess: () => {
+                    snackbar.add({ type: 'success', text: 'Payment was successful' });
+                    resetCart();
+                    closeCashModal();
+                },
+                onError: (errors) => {
+                    snackbar.add({ type: 'error', text: errors.error });
+                },
+                onFinish: () => {
+                    loading.value = false;
+                }
+            });
+        };
+
         watch(selectedCurrency, updatePrices);
 
         watch(search, (value) => {
@@ -320,7 +407,11 @@ export default {
             showCashModal,
             showCardModal,
             updatePrices,
-            loading
+            loading,
+            showSpecialSaleModal,
+            closeSpecialModal,
+            openSpecialModal,
+            processSpecialSale
         };
     },
 };
