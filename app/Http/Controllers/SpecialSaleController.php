@@ -34,7 +34,7 @@ class SpecialSaleController extends Controller
         try{
             $validated_data = $request->validate([
                 "amount" => ["required","numeric", 'min:0'],
-                "type" => ["required","string","in:CASH,EFT"],
+                "type" => ["required","string","in:SPECIAL"],
                 "currency" => ["required","string","max:3", "min:3"],
                 'items' => ['required', 'array', 'min:1'],
                 'items.*.item_id' => ['required', 'integer'],

@@ -120,11 +120,11 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700 font-semibold mb-2">Regnum/EC Number</label>
-                    <input type="text" :disabled="loading" v-model="consumer_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="text" :disabled="loading" v-model="consumerCode" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700 font-semibold mb-2">Consumer Pin</label>
-                    <input type="text" :disabled="loading" v-model="consumer_pin" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="text" :disabled="loading" v-model="consumerPin" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
             </div>
             <div v-if="loading" class="flex justify-between mt-4 text-yellow-500 text-bold">
@@ -171,6 +171,8 @@ export default {
         const showSpecialSaleModal = ref(false);
         const currencyEftCode = ref("840");
         const loading = ref(false);
+        const consumerCode = ref("");
+        const consumerPin = ref("");
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
@@ -360,8 +362,8 @@ export default {
                 price: item.price * conversionRate.value,
                 total_price: (item.price * conversionRate.value) * item.quantity
             }));
-            specialForm.change = change.value;
-            specialForm.cash = cashReceived.value;
+            specialForm.consumer_code = consumerCode.value;
+            specialForm.consumer_pin = consumerPin.value;
 
             specialForm.post("/special", {
                 onSuccess: () => {
@@ -411,7 +413,9 @@ export default {
             showSpecialSaleModal,
             closeSpecialModal,
             openSpecialModal,
-            processSpecialSale
+            processSpecialSale,
+            consumerCode,
+            consumerPin
         };
     },
 };

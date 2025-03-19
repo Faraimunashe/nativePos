@@ -5,6 +5,7 @@ use App\Http\Controllers\Config\EnvConfigController;
 use App\Http\Controllers\EFTController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SpecialSaleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,6 +28,7 @@ Route::middleware(['api.auth','configs'])->group(function () {
 
     Route::post('/cash', [PosController::class, 'store']);
     Route::post('/card', [EFTController::class, 'store']);
+    Route::post('/special', [SpecialSaleController::class, 'store']);
 
 
 });
