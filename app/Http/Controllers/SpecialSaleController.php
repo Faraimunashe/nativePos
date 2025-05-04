@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PrintReceipt;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -10,6 +12,12 @@ use Session;
 
 class SpecialSaleController extends Controller
 {
+    protected $receipt;
+
+    public function __construct(PrintReceipt $receipt)
+    {
+        $this->receipt = $receipt;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -42,7 +50,6 @@ class SpecialSaleController extends Controller
                 'items.*.price' => ['required', 'numeric', 'min:0'],
                 'items.*.total_price' => ['required', 'numeric', 'min:0'],
                 'consumer_code' => ['required', 'string'],
-                'consumer_pin' => ['required', 'numeric'],
                 'terminal' => ['required', 'string'],
                 'location' => ['required', 'string'],
             ]);
@@ -59,23 +66,24 @@ class SpecialSaleController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
 
-                dd($data);
+                //dd($data);
 
-                //$sale = $data['sale'];
+                $sale = $data['sale'];
 
-                //$cashier_name = Session::get('user')['name'];
+                $cashier_name = Session::get('user')['name'];
                 //dd($sale['created_at']);
-                //$datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
+                $datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
 
 
-                //$receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
+                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
 
                 //dd($receipt);
                 return back()->with([
                     'success' => 'Special sale recorded successfully'
                 ]);
             } else {
-                return back()->withErrors(['error' => 'API Error: ' . $response->body()]);
+                $error = json_decode($response->body(), true);
+                return back()->withErrors(['error' => 'API Error: ' . $error['message']]);
             }
         }catch (Exception $e){
             return back()->withErrors(['error'=> $e->getMessage()]);

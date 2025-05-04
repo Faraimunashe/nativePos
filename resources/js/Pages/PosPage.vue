@@ -122,10 +122,6 @@
                     <label class="block text-gray-700 font-semibold mb-2">Regnum/EC Number</label>
                     <input type="text" :disabled="loading" v-model="consumerCode" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-semibold mb-2">Consumer Pin</label>
-                    <input type="text" :disabled="loading" v-model="consumerPin" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
             </div>
             <div v-if="loading" class="flex justify-between mt-4 text-yellow-500 text-bold">
                 Wait, don't close! Special Sale is processing ...
@@ -172,7 +168,6 @@ export default {
         const currencyEftCode = ref("840");
         const loading = ref(false);
         const consumerCode = ref("");
-        const consumerPin = ref("");
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
@@ -346,8 +341,7 @@ export default {
             items: [],
             terminal: props.terminal,
             location: props.location,
-            consumer_code: '',
-            consumer_pin: ''
+            consumer_code: ''
         });
 
         const processSpecialSale = async () => {
@@ -363,7 +357,6 @@ export default {
                 total_price: (item.price * conversionRate.value) * item.quantity
             }));
             specialForm.consumer_code = consumerCode.value;
-            specialForm.consumer_pin = consumerPin.value;
 
             specialForm.post("/special", {
                 onSuccess: () => {
@@ -414,8 +407,7 @@ export default {
             closeSpecialModal,
             openSpecialModal,
             processSpecialSale,
-            consumerCode,
-            consumerPin
+            consumerCode
         };
     },
 };
