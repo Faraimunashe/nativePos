@@ -72,3 +72,17 @@ function connected_printers(){
 
     return $printer_names;
 }
+
+function get_eft_code($currencyCode)
+{
+    $rates = session('eft_codes', []);
+
+    foreach ($rates as $rate) {
+        if ($rate['currency_code'] === $currencyCode) {
+            return $rate['eft_code'];
+        }
+    }
+
+    return null;
+}
+

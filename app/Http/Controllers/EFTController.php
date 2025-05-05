@@ -44,7 +44,7 @@ class EFTController extends Controller
 
 
 
-        $eft_currency = "840";
+        //$eft_currency = "840";
         $currency = $request->currency;
         $amount = convert_minor($request->amount);
         $term_id = get_terminal_id();
@@ -52,15 +52,15 @@ class EFTController extends Controller
         $token = Session::get('api_token');
         $url = base_url() . '/eft-success';
 
-        if($currency == "ZIG"){
-            $eft_currency = "932";
-        }elseif($currency == "ZIG") {
-            $eft_currency = "924";
+        $eft_code = get_eft_code($currency);
+
+        if(is_null($eft_code)){
+            return back()->withErrors(['error' => 'Invalid currency selected, try again']);
         }
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
                 '<Esp:Interface xmlns:Esp="http://www.mosaicsoftware.com/Postilion/eSocket.POS/" Version="1.0">' . "\n" .
-                '    <Esp:Transaction CurrencyCode="' . $eft_currency . '" TerminalId="' . $term_id . '" TransactionId="' . $transaction_id . '" Type="PURCHASE" TransactionAmount="' . $amount . '">' . "\n" .
+                '    <Esp:Transaction CurrencyCode="' . $eft_code . '" TerminalId="' . $term_id . '" TransactionId="' . $transaction_id . '" Type="PURCHASE" TransactionAmount="' . $amount . '">' . "\n" .
                 '        <Esp:PosStructuredData Name="version" Value="2.0.05"/>' . "\n" .
                 '    </Esp:Transaction>' . "\n" .
                 '</Esp:Interface>';
@@ -193,20 +193,17 @@ class EFTController extends Controller
             return [];
         }
 
-        // Register namespace if exists
         $namespaces = $xml->getNamespaces(true);
         if (isset($namespaces['Esp'])) {
             $xml->registerXPathNamespace('Esp', $namespaces['Esp']);
         }
 
-        // Extract <Esp:Transaction> element
         $transaction = $xml->xpath('//Esp:Transaction')[0] ?? null;
 
         if (!$transaction) {
             return [];
         }
 
-        // Extract necessary transaction data
         $transactionData = [
             'account' => (string) ($transaction['Account'] ?? ''),
             'action_code' => (string) ($transaction['ActionCode'] ?? ''),
@@ -258,7 +255,6 @@ class EFTController extends Controller
             'type' => (string) ($transaction['Type'] ?? ''),
         ];
 
-        // Return extracted data
         return $transactionData;
     }
 

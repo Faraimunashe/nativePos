@@ -34,6 +34,8 @@ class LoginController extends Controller
         if ($response->successful()) {
             $data = $response->json();
 
+            //dd($data);
+
             $user_data = $data['user'];
 
             Session::put('user', [
@@ -43,6 +45,8 @@ class LoginController extends Controller
             ]);
 
             Session::put('api_token', $data['token']);
+
+            Session::put('eft_codes', $data['rates']);
 
             return redirect()->intended('pos');
         }
