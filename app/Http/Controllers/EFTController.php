@@ -54,6 +54,8 @@ class EFTController extends Controller
 
         $eft_code = get_eft_code($currency);
 
+        //dd($eft_code);
+
         if(is_null($eft_code)){
             return back()->withErrors(['error' => 'Invalid currency selected, try again']);
         }
