@@ -75,7 +75,7 @@ class SpecialSaleController extends Controller
                 $datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
 
 
-                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
+                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "Special", $datetime, $request->items, '-', 0.00, 0.00, 0.00);
 
                 //dd($receipt);
                 return back()->with([
