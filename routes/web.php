@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Config\EnvConfigController;
 use App\Http\Controllers\EFTController;
 use App\Http\Controllers\PosController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SpecialSaleController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,9 @@ Route::middleware(['api.auth','configs'])->group(function () {
     Route::post('/cash', [PosController::class, 'store']);
     Route::post('/card', [EFTController::class, 'store']);
     Route::post('/special', [SpecialSaleController::class, 'store']);
+
+    Route::get('/profile', [ProfileController::class, 'index']);
+    Route::post('/profile', [ProfileController::class, 'store']);
 
 
 });
