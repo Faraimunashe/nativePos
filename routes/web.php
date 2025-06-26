@@ -13,8 +13,8 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/login', [LoginController::class, 'index'])->middleware('configs')->name('login');
-Route::post('/login', [LoginController::class, 'login'])->middleware('configs')->name('login');
+Route::get('/login', [LoginController::class, 'index'])->middleware(['configs'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->middleware(['configs'])->name('login');
 
 
 Route::get('/configs', [EnvConfigController::class, 'index'])->name('configs');

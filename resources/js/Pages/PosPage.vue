@@ -20,7 +20,7 @@
         <div class="w-1/4 bg-gray-200 p-4 rounded-lg shadow-lg flex flex-col" style="height: 80vh;">
             <h3 class="text-xl font-semibold mb-2">Cart</h3>
             <select v-model="selectedCurrency" @change="updatePrices" class="mb-4 p-2 border rounded-lg">
-                <option v-for="currency in currencies" :key="currency.code" :value="currency.currency_code">{{ currency.currency_code }}</option>
+                <option v-for="currency in currencies" :key="currency.code" :value="currency.code">{{ currency.code }}</option>
             </select>
             <div v-if="cart.length === 0" class="text-gray-600">No items in cart</div>
             <div class="cart-items flex-grow" style="max-height: calc(100% - 120px); overflow-y: auto;">
@@ -33,11 +33,11 @@
             <div class="text-lg font-bold text-gray-800 mt-4">Total: {{ selectedCurrency }} {{ (totalPrice * conversionRate).toFixed(2) }}</div>
             <div class="grid grid-cols-1 gap-2 mt-4 flex-shrink-0">
                 <div class="flex flex-col gap-2">
-                    <button v-if="enabled_payments == 'CASH' || enabled_payments == 'BOTH'" class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="openCashModal">Cash Payment</button>
-                    <button v-if="enabled_payments == 'CARD' || enabled_payments == 'BOTH'" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" @click="showCardModal = true">Card Payment</button>
+                    <button v-if="cash" class="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" @click="openCashModal">Cash Payment</button>
+                    <button v-if="eft" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" @click="showCardModal = true">Card Payment</button>
                 </div>
                 <div class="flex gap-2">
-                    <button class="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 w-full" @click="openSpecialModal">Special Sale</button>
+                    <button v-if="special" class="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 w-full" @click="openSpecialModal">Special Sale</button>
                     <button class="bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 w-full" @click="resetCart">Reset</button>
                 </div>
             </div>
@@ -150,29 +150,35 @@ export default {
         location: String
     },
     computed: {
-        enabled_payments() {
-            return this.$page.props.auth.env.enabled_payments;
+        cash() {
+            return this.$page.props.auth.env.cash;
+        },
+        eft() {
+            return this.$page.props.auth.env.eft;
+        },
+        special() {
+            return this.$page.props.auth.env.special;
         },
     },
     setup(props) {
         const search = ref("");
         const cart = ref([]);
-        const selectedCurrency = ref("USD");
-        const conversionRate = ref(1);
+        const selectedCurrency = ref("USD"); // set a default value from state
+        const conversionRate = ref(1); // set a default value from state
         const showCashModal = ref(false);
         const cashReceived = ref(0);
         const change = ref(0);
         const snackbar = useSnackbar();
         const showCardModal = ref(false);
         const showSpecialSaleModal = ref(false);
-        const currencyEftCode = ref("840");
+        const currencyEftCode = ref("840"); // set a default value from state
         const loading = ref(false);
         const consumerCode = ref("");
 
         const updatePrices = () => {
-            const currency = props.currencies.find(c => c.currency_code === selectedCurrency.value);
-            conversionRate.value = currency ? currency.conversion_rate : 1;
-            currencyEftCode.value = currency ? currency.eft_code : "840";
+            const currency = props.currencies.find(c => c.code === selectedCurrency.value);
+            conversionRate.value = currency.rate;
+            currencyEftCode.value = currency.eft_code;
         };
 
         const addToCart = (item) => {

@@ -16,13 +16,10 @@ return new class extends Migration
             $table->id();
             $table->string('server_ip')->default('http://127.0.0.1:8080/api');
             $table->string('server_version')->default('v1');
-            $table->string('default_currency')->default('USD');
-            $table->string('enabled_payments')->default('CASH');
             $table->string('socket_ip')->default('127.0.0.1');
             $table->string('socket_port')->default('23001');
-            $table->string('location')->default('Development Desk');
-            $table->string('terminal')->default('ESADZA01');
             $table->string('printer')->default('Microsoft Print to PDF');
+            $table->string('token')->unique();
             $table->timestamps();
         });
     }

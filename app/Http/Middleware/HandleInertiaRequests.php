@@ -40,7 +40,7 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             'auth' => Session::get('user') ? [
                 'user' => Session::get('user'),
-                'env' => Environment::first()
+                'env' => session('terminal_state', [])
             ] : null
         ]);
     }

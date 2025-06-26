@@ -27,18 +27,25 @@ function get_socket_port()
     return $socket_port;
 }
 
-function get_terminal_id()
+function get_token()
 {
     $env = Environment::first();
-    $terminal = $env->terminal;
-    return $terminal;
+    $token = $env->token;
+    return $token;
+}
+
+function get_terminal_id()
+{
+    $state = session('terminal_state');
+
+    return "";//$state['term_id'];
 }
 
 function get_location()
 {
-    $env = Environment::first();
-    $location = $env->location;
-    return $location;
+    $state = session('terminal_state');
+
+    return "";//$state['location_name'];
 }
 
 function get_selected_printer()
@@ -78,7 +85,7 @@ function get_eft_code($currencyCode)
     $rates = session('eft_codes', []);
 
     foreach ($rates as $rate) {
-        if ($rate['currency_code'] === $currencyCode) {
+        if ($rate['code'] === $currencyCode) {
             return $rate['eft_code'];
         }
     }

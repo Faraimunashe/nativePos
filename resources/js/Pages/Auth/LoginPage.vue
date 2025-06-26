@@ -37,6 +37,7 @@
                         <span v-if="loading">Signing In...</span>
                         <span v-else>Sign In</span>
                     </button>
+                    <div v-if="form.errors.error" class="text-red-500 text-sm">{{ form.errors.error }}</div>
                 </form>
                 <!-- Register link below the login form -->
                 <div class="text-center mt-4">

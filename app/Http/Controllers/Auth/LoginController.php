@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\HttpClientWithHeaderCapture;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -13,10 +14,11 @@ class LoginController extends Controller
 
     public function index()
     {
+        Session::forget(['api_token', 'user', 'terminal_state']);
         return inertia('Auth/LoginPage');
     }
 
-    public function login(Request $request)
+    public function login(Request $request, HttpClientWithHeaderCapture $http)
     {
         $request->validate([
             'email' => ['required','email'],
@@ -25,7 +27,7 @@ class LoginController extends Controller
 
         $url = base_url() . '/login';
 
-        $response = Http::post($url, [
+        $response = $http->withHeaders(['X-LOCATION-AUTH' => get_token()])->post($url, [
             'email' => $request->email,
             'password' => $request->password
         ]);
@@ -51,17 +53,19 @@ class LoginController extends Controller
             return redirect()->intended('pos');
         }
 
+        dd($response);
+
         return back()->withErrors(['email' => 'The login details are not valid']);
     }
 
 
-    public function logout()
+    public function logout(HttpClientWithHeaderCapture $http)
     {
         $token = Session::get('api_token');
         $url = base_url() . '/logout';
 
         if ($token) {
-            $response = Http::withToken($token)->post($url);
+            $response = $http->withToken($token)->post($url);
 
             if ($response->successful()) {
                 Session::forget(['api_token', 'user']);
@@ -71,7 +75,7 @@ class LoginController extends Controller
             return back()->withErrors('Logout failed. Please try again.');
         }
 
-        Session::forget(['api_token', 'user']);
+        Session::forget(['api_token', 'user', 'terminal_state']);
         return redirect()->route('login');
     }
 }

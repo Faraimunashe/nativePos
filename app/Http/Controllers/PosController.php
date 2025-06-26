@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\EFTService;
+use App\Services\HttpClientWithHeaderCapture;
 use App\Services\PrintReceipt;
 use Carbon\Carbon;
 use Http;
@@ -22,10 +23,10 @@ class PosController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, HttpClientWithHeaderCapture $http)
     {
-        $eft = EFTService::getInstance();
-        $eft->initializeConnection();
+        //$eft = EFTService::getInstance();
+        //$eft->initializeConnection();
 
         $search =  $request->search;
         $token = Session::get('api_token');
@@ -38,7 +39,7 @@ class PosController extends Controller
         }
 
         $url = base_url() . '/items';
-        $response = Http::withToken($token)->get($url, $query_params);
+        $response = $http->withToken($token)->withHeaders(['X-LOCATION-AUTH' => get_token()])->get($url, $query_params);
 
         if ($response->successful()) {
             $data = $response->json();
@@ -66,7 +67,7 @@ class PosController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, HttpClientWithHeaderCapture $http)
     {
         try{
             //sleep(10);
@@ -88,10 +89,11 @@ class PosController extends Controller
             $token = Session::get('api_token');
             $url = base_url() . '/sales';
 
-            $response = Http::withHeaders([
+            $response = $http->withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $token,
+                'X-LOCATION-AUTH' => get_token(),
             ])->post($url, $validated_data);
 
             if ($response->successful()) {

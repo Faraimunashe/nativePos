@@ -19,7 +19,7 @@ class EnvConfigMiddleware
         $config = Environment::first();
 
         if (is_null($config)) {
-            return redirect()->route('configs')->withErrors('Please configure your environment first.');
+            return redirect()->route('configs')->withErrors(['error' => 'Please configure your environment first.']);
         }
         return $next($request);
     }

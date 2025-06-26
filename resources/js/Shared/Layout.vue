@@ -17,10 +17,10 @@ export default {
             return this.$page.props.auth.user.name
         },
         location() {
-            return this.$page.props.auth.env.location
+            return this.$page.props.auth.env.location_name
         },
         terminal() {
-            return this.$page.props.auth.env.terminal
+            return this.$page.props.auth.env.term_id
         }
     }
 };

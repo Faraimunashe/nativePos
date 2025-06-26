@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Config;
 
 use App\Http\Controllers\Controller;
 use App\Models\Environment;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Env;
 
@@ -39,47 +40,38 @@ class EnvConfigController extends Controller
             $request->validate([
                 'server_ip' => ['required', 'url'],
                 'server_version' => ['required', 'string'],
-                'default_currency' => ['required', 'string'],
-                'enabled_payments'=> ['required', 'string'],
-                'socket_ip'=> ['required', 'string'],
-                'socket_port'=> ['required', 'string'],
-                'location'=> ['required', 'string'],
-                'terminal'=> ['required', 'string'],
-                'selected_printer' => ['required', 'string']
+                'socket_ip' => ['required', 'string'],
+                'socket_port' => ['required', 'string'],
+                'printer' => ['required', 'string'],
+                'token' => ['required', 'string']
             ]);
 
-            $env = Environment::first();
+            $env = Environment::where('token', $request->token)->first();
 
             if ($env) {
                 $env->server_ip = $request->server_ip;
                 $env->server_version = $request->server_version;
-                $env->default_currency = $request->default_currency;
-                $env->enabled_payments = $request->enabled_payments;
                 $env->socket_ip = $request->socket_ip;
                 $env->socket_port = $request->socket_port;
-                $env->location = $request->location;
-                $env->terminal = $request->terminal;
-                $env->printer = $request->selected_printer;
+                $env->printer = $request->printer;
                 $env->save();
             } else {
                 $env = new Environment();
                 $env->server_ip = $request->server_ip;
                 $env->server_version = $request->server_version;
-                $env->default_currency = $request->default_currency;
-                $env->enabled_payments = $request->enabled_payments;
                 $env->socket_ip = $request->socket_ip;
                 $env->socket_port = $request->socket_port;
-                $env->location = $request->location;
-                $env->terminal = $request->terminal;
-                $env->printer = $request->selected_printer;
+                $env->printer = $request->printer;
+                $env->token = $request->token;
                 $env->save();
             }
 
-            return back()->with(['success' => 'Environment configurations saved successfully']);
-        } catch (\Exception $e) {
+            return back()->with('success', 'Environment configuration saved successfully');
+        } catch (Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
+
 
 
     /**
