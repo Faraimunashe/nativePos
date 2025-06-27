@@ -38,14 +38,14 @@ function get_terminal_id()
 {
     $state = session('terminal_state');
 
-    return "";//$state['term_id'];
+    return $state['term_id'];
 }
 
 function get_location()
 {
     $state = session('terminal_state');
 
-    return "";//$state['location_name'];
+    return $state['location_name'];
 }
 
 function get_selected_printer()

@@ -229,8 +229,6 @@ export default {
             items: [],
             change: 0,
             cash: 0,
-            terminal: props.terminal,
-            location: props.location,
         });
 
         const processCashPayment = async () => {
@@ -340,13 +338,20 @@ export default {
             showSpecialSaleModal.value = false;
         };
 
+        // const cashPaymentForm = useForm({
+        //     amount: 0,
+        //     type: "CASH",
+        //     currency: selectedCurrency.value,
+        //     items: [],
+        //     change: 0,
+        //     cash: 0,
+        // });
+
         const specialForm = useForm({
             amount: 0,
             type: "SPECIAL",
             currency: selectedCurrency.value,
             items: [],
-            terminal: props.terminal,
-            location: props.location,
             consumer_code: ''
         });
 

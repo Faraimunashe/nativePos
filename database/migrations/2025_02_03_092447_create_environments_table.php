@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('socket_ip')->default('127.0.0.1');
             $table->string('socket_port')->default('23001');
             $table->string('printer')->default('Microsoft Print to PDF');
-            $table->string('token')->unique();
+            $table->string('token');
             $table->timestamps();
         });
     }

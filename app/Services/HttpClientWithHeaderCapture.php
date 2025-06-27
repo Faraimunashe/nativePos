@@ -14,7 +14,7 @@ class HttpClientWithHeaderCapture
 
     public function __construct()
     {
-        $this->client = Http::timeout(10);
+        $this->client = Http::timeout(5);
     }
 
     public function withToken(string $token): self
@@ -45,6 +45,8 @@ class HttpClientWithHeaderCapture
 
     protected function captureHeaders($response)
     {
+        Session::forget(['terminal_state']);
+
         $term_id = $response->header('X-TERMINAL-ID');
         $location_name = $response->header('X-LOCATION-NAME');
         $default_currency = $response->header('X-CURRENCY-CODE');
@@ -53,11 +55,14 @@ class HttpClientWithHeaderCapture
         $eft = $response->header('X-TRANSACT-EFT');
         $special = $response->header('X-TRANSACT-SPECIAL');
 
-        if (empty($term_id) || empty($location_name) || empty($default_currency) || empty($terminal_status) || empty($cash) || empty($eft) || empty($special)) {
+        if (empty($term_id) || empty($location_name) || empty($default_currency)) {
+            //dd($term_id, $location_name, $default_currency, $terminal_status, $cash, $eft, $special);
+            Session::forget(['api_token', 'user']);
             return redirect()->route('login')->withErrors(['error' => 'An important terminal variable is missing contact admin']);
         }
 
         if ($terminal_status == false) {
+            Session::forget(['api_token', 'user']);
             return redirect()->route('login')->withErrors(['error' => 'This terminal is not active at the moment']);
         }
 
@@ -70,6 +75,8 @@ class HttpClientWithHeaderCapture
             'eft' => filter_var($eft, FILTER_VALIDATE_BOOLEAN),
             'special' => filter_var($special, FILTER_VALIDATE_BOOLEAN)
         ]);
+
+
 
     }
 }

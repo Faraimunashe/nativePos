@@ -46,7 +46,9 @@ class EnvConfigController extends Controller
                 'token' => ['required', 'string']
             ]);
 
-            $env = Environment::where('token', $request->token)->first();
+            $env = Environment::first();
+
+            //dd($request->all());
 
             if ($env) {
                 $env->server_ip = $request->server_ip;
@@ -54,7 +56,10 @@ class EnvConfigController extends Controller
                 $env->socket_ip = $request->socket_ip;
                 $env->socket_port = $request->socket_port;
                 $env->printer = $request->printer;
+                $env->token = $request->token;
                 $env->save();
+
+                return back()->with('success', 'Environment configuration updated successfully');
             } else {
                 $env = new Environment();
                 $env->server_ip = $request->server_ip;
@@ -64,10 +69,13 @@ class EnvConfigController extends Controller
                 $env->printer = $request->printer;
                 $env->token = $request->token;
                 $env->save();
+
+                return back()->with('success', 'Environment configuration saved successfully');
             }
 
-            return back()->with('success', 'Environment configuration saved successfully');
+
         } catch (Exception $e) {
+            dd("error");
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }

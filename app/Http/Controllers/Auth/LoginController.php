@@ -25,6 +25,8 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
+        $msg = "The login details are not valid";
+
         $url = base_url() . '/login';
 
         $response = $http->withHeaders(['X-LOCATION-AUTH' => get_token()])->post($url, [
@@ -51,11 +53,15 @@ class LoginController extends Controller
             Session::put('eft_codes', $data['rates']);
 
             return redirect()->intended('pos');
+        }else{
+            $data = $response->json();
+
+            $msg = $data['message'];
         }
 
-        dd($response);
+        //dd($response);
 
-        return back()->withErrors(['email' => 'The login details are not valid']);
+        return back()->withErrors(['email' => $msg]);
     }
 
 
@@ -68,7 +74,7 @@ class LoginController extends Controller
             $response = $http->withToken($token)->post($url);
 
             if ($response->successful()) {
-                Session::forget(['api_token', 'user']);
+                Session::forget(['api_token', 'user', 'terminal_state']);
                 return redirect()->route('login')->with('success', 'Logged out successfully');
             }
 

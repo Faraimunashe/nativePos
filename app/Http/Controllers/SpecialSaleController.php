@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\HttpClientWithHeaderCapture;
 use App\Services\PrintReceipt;
 use Carbon\Carbon;
 use Exception;
@@ -37,7 +38,7 @@ class SpecialSaleController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, HttpClientWithHeaderCapture $http)
     {
         try{
             $validated_data = $request->validate([
@@ -50,17 +51,18 @@ class SpecialSaleController extends Controller
                 'items.*.price' => ['required', 'numeric', 'min:0'],
                 'items.*.total_price' => ['required', 'numeric', 'min:0'],
                 'consumer_code' => ['required', 'string'],
-                'terminal' => ['required', 'string'],
-                'location' => ['required', 'string'],
             ]);
+
+            //dd($validated_data);
 
             $token = Session::get('api_token');
             $url = base_url() . '/special';
 
-            $response = Http::withHeaders([
+            $response = $http->withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $token,
+                'X-LOCATION-AUTH' => get_token(),
             ])->post($url, $validated_data);
 
             if ($response->successful()) {
@@ -75,7 +77,7 @@ class SpecialSaleController extends Controller
                 $datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
 
 
-                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "Special", $datetime, $request->items, '-', 0.00, 0.00, 0.00);
+                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "Special", $datetime, $request->items, $request->currency, $sale['amount'], 0.00, 0.00);
 
                 //dd($receipt);
                 return back()->with([

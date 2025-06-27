@@ -28,7 +28,6 @@ class PosController extends Controller
         //$eft = EFTService::getInstance();
         //$eft->initializeConnection();
 
-        $search =  $request->search;
         $token = Session::get('api_token');
         $items = [];
         $currencies = [];
@@ -41,6 +40,7 @@ class PosController extends Controller
         $url = base_url() . '/items';
         $response = $http->withToken($token)->withHeaders(['X-LOCATION-AUTH' => get_token()])->get($url, $query_params);
 
+
         if ($response->successful()) {
             $data = $response->json();
             //dd($data);
@@ -51,8 +51,8 @@ class PosController extends Controller
         return inertia("PosPage", [
             'items' => $items,
             'currencies' => $currencies,
-            'terminal' => get_terminal_id(),
-            'location' => get_location()
+            //'terminal' => get_terminal_id(),
+            //'location' => get_location()
         ]);
     }
 
@@ -82,12 +82,12 @@ class PosController extends Controller
                 'items.*.total_price' => ['required', 'numeric', 'min:0'],
                 'change' => ['required', 'numeric', 'min:0'],
                 'cash' => ['required', 'numeric', 'min:0'],
-                'terminal' => ['required', 'string'],
-                'location' => ['required', 'string'],
             ]);
 
             $token = Session::get('api_token');
             $url = base_url() . '/sales';
+
+            //dd($validated_data);
 
             $response = $http->withHeaders([
                 'Accept' => 'application/json',
@@ -105,7 +105,7 @@ class PosController extends Controller
                 $datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
 
 
-                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $sale['currency'], $sale['amount'], $data['cash'], $data['change']);
+                $receipt = $this->receipt->printReceipt($sale['reference'], $cashier_name, "CASH", $datetime, $request->items, $request->currency, $sale['amount'], $data['cash'], $data['change']);
 
                 //dd($receipt);
                 return back()->with([
