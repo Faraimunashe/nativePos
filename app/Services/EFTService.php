@@ -75,57 +75,80 @@ class EFTService
         return $this->parseTransactionResponse($response);
     }
 
+    // private function waitForTransactionResponse(): string
+    // {
+    //     $response = '';
+    //     $timeout = 120;
+    //     $elapsedTime = 0;
+
+    //     while (true) {
+    //         $read = [$this->socket];
+    //         $write = $except = null;
+    //         $tv_sec = 0;
+    //         $tv_usec = 100000;
+
+    //         $numChangedStreams = stream_select($read, $write, $except, $tv_sec, $tv_usec);
+
+    //         if ($numChangedStreams === false) {
+    //             throw new Exception("Error reading from socket");
+    //         }
+
+    //         if ($numChangedStreams > 0 && in_array($this->socket, $read)) {
+    //             $chunk = fread($this->socket, 1024);
+
+    //             if ($chunk === false) {
+    //                 throw new Exception("Error reading from socket");
+    //             }
+
+    //             $response .= $chunk;
+
+    //             if (strpos($response, '<Esp:Transaction') !== false || strpos($response, '<Esp:Interface') !== false) {
+    //                 //dd($response);
+    //                 preg_match('/<Esp:Interface[^>]*><Esp:Transaction[^>]*>.*?<\/Esp:Transaction>.*?<\/Esp:Interface>/s', $response, $matches);
+
+    //                 if (!empty($matches)) {
+
+    //                     $cleanResponse = preg_replace('/[\x00-\x1F\x80-\x9F]/', '', $matches[0]);
+    //                     $cleanResponse = html_entity_decode($cleanResponse, ENT_NOQUOTES, 'UTF-8');
+
+    //                     \Log::info('EFT Response: ' . $cleanResponse);
+
+    //                     return $cleanResponse;
+    //                 }
+    //             }
+    //         }
+
+    //         $elapsedTime += 0.1;
+    //         if ($elapsedTime > $timeout) {
+    //             throw new Exception("Timeout while waiting for transaction response");
+    //         }
+    //     }
+    // }
+
+
+    /**
+ * Wait for—and return—the first complete <Esp:Interface>…<Esp:Transaction>…</Esp:Interface> envelope.
+ */
     private function waitForTransactionResponse(): string
     {
-        $response = '';
-        $timeout = 120;
-        $elapsedTime = 0;
+        $buffer = '';
 
         while (true) {
-            $read = [$this->socket];
-            $write = $except = null;
-            $tv_sec = 0;
-            $tv_usec = 100000;
 
-            $numChangedStreams = stream_select($read, $write, $except, $tv_sec, $tv_usec);
+            $chunk = $this->receiveResponse();
+            $buffer .= $chunk;
 
-            if ($numChangedStreams === false) {
-                throw new Exception("Error reading from socket");
-            }
+            if (strpos($buffer, '<Esp:Transaction') !== false) {
 
-            if ($numChangedStreams > 0 && in_array($this->socket, $read)) {
-                $chunk = fread($this->socket, 1024);
-
-                if ($chunk === false) {
-                    throw new Exception("Error reading from socket");
-                }
-
-                $response .= $chunk;
-
-                if (strpos($response, '<Esp:Transaction') !== false || strpos($response, '<Esp:Interface') !== false) {
-                    //dd($response);
-                    preg_match('/<Esp:Interface[^>]*><Esp:Transaction[^>]*>.*?<\/Esp:Transaction>.*?<\/Esp:Interface>/s', $response, $matches);
-
-                    if (!empty($matches)) {
-
-                        $cleanResponse = preg_replace('/[\x00-\x1F\x80-\x9F]/', '', $matches[0]);
-                        $cleanResponse = html_entity_decode($cleanResponse, ENT_NOQUOTES, 'UTF-8');
-
-                        \Log::info('EFT Response: ' . $cleanResponse);
-
-                        return $cleanResponse;
-                    }
-                }
-            }
-
-            $elapsedTime += 0.1;
-            if ($elapsedTime > $timeout) {
-                throw new Exception("Timeout while waiting for transaction response");
+                $clean = preg_replace('/[\x00-\x1F\x80-\x9F]/', '', $buffer);
+                $clean = html_entity_decode($clean, ENT_NOQUOTES, 'UTF-8');
+                \Log::info('EFT Response: ' . $clean);
+                return $clean;
             }
         }
     }
 
-
+    /*
     private function parseTransactionResponse(string $response): array
     {
         if (empty($response)) {
@@ -189,6 +212,62 @@ class EFTService
             'response_code' => $responseCode,
             'action_code' => $actionCode,
             'raw' => $transactionXml
+        ];
+    }
+
+    */
+
+    /**
+     * Parse out the <Esp:Transaction> envelope from a full Interface payload.
+     */
+    private function parseTransactionResponse(string $response): array
+    {
+        $cleanResponse = preg_replace('/[^\x20-\x7E\x0A\x0D]/', '', $response);
+
+        preg_match_all(
+            '/<\?xml[^?]+\?>\s*<Esp:Interface[^>]*>\s*<Esp:Transaction[^>]*>.*?<\/Esp:Transaction>\s*<\/Esp:Interface>/s',
+            $cleanResponse,
+            $matches
+        );
+
+        $envelopes = $matches[0] ?? [];
+
+        if (empty($envelopes)) {
+            return [
+                'approved' => false,
+                'message'  => 'Failed to locate a complete transaction envelope',
+                'raw'      => $cleanResponse,
+            ];
+        }
+        $transactionXml = end($envelopes);
+
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($transactionXml, "SimpleXMLElement", LIBXML_NOCDATA);
+        if (! $xml) {
+            return ['approved' => false, 'message' => 'Invalid XML', 'raw' => $transactionXml];
+        }
+
+        $namespaces = $xml->getNamespaces(true);
+        if (isset($namespaces['Esp'])) {
+            $xml->registerXPathNamespace('Esp', $namespaces['Esp']);
+        }
+        $txn = $xml->xpath('//Esp:Transaction')[0] ?? null;
+
+        if (! $txn) {
+            return ['approved' => false, 'message' => 'No <Esp:Transaction> found', 'raw' => $transactionXml];
+        }
+
+        // Extract attributes
+        $actionCode    = (string) ($txn['ActionCode']    ?? 'UNKNOWN');
+        $responseCode  = (string) ($txn['ResponseCode']  ?? 'UNKNOWN');
+        $transactionId = (string) ($txn['TransactionId'] ?? 'UNKNOWN');
+
+        return [
+            'approved'        => $actionCode === 'APPROVE' || $responseCode === '00',
+            'transaction_id'  => $transactionId,
+            'response_code'   => $responseCode,
+            'action_code'     => $actionCode,
+            'raw'             => $transactionXml,
         ];
     }
 

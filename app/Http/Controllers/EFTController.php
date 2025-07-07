@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FailEft;
 use App\Services\EFTService;
+use App\Services\HttpClientWithHeaderCapture;
 use App\Services\PrintReceipt;
 use App\Services\ResponseCodeMapper;
 use App\Services\StanGenerator;
@@ -24,7 +25,7 @@ class EFTController extends Controller
         $this->receipt = $receipt;
     }
 
-    public function store(Request $request)
+    public function store(Request $request, HttpClientWithHeaderCapture $http)
     {
         $request->validate([
             "amount" => ["required","numeric", 'min:0'],
@@ -37,9 +38,6 @@ class EFTController extends Controller
             'items.*.total_price' => ['required', 'numeric', 'min:0'],
             'change' => ['required', 'numeric', 'min:0'],
             'cash' => ['required', 'numeric', 'min:0'],
-            'terminal' => ['required', 'string'],
-            'location' => ['required', 'string'],
-            //'eft_code' => ['required', 'string']
         ]);
 
 
@@ -50,7 +48,7 @@ class EFTController extends Controller
         $term_id = get_terminal_id();
         $transaction_id = $this->generateStan();
         $token = Session::get('api_token');
-        $url = base_url() . '/eft-success';
+        $url = base_url() . '/eftsuccess';
 
         $eft_code = get_eft_code($currency);
 
@@ -82,23 +80,62 @@ class EFTController extends Controller
                     'type' => 'EFT',
                     'currency' => $currency,
                     'items' => $request->items,
-                    'transaction_id' => $response_array['transaction_id'],
-                    'account' => $response_array['account'],
-                    'action_code' => $response_array['action_code'],
-                    'authorization_number' => $response_array['authorization_number'],
-                    'business_date' => $response_array['business_date'],
-                    'date_time' => $response_array['date_time'],
-                    'card_number' => $response_array['card_number'],
-                    'card_product_name' => $response_array['card_product_name'],
-                    'currency_code' => $response_array['currency_code'],
-                    'trans_type' => $response_array['type'],
-                    'terminal' => $term_id,
-                    'location' => get_location()
+                    'transaction_id' => $response_array['transaction_id'] ?? null,
+                    'account' => $response_array['account'] ?? null,
+                    'action_code' => $response_array['action_code'] ?? null,
+                    'amount_transaction_fee' => $response_array['amount_transaction_fee'] ?? null,
+                    'authorization_number' => $response_array['authorization_number'] ?? null,
+                    'authorization_profile' => $response_array['authorization_profile'] ?? null,
+                    'business_date' => $response_array['business_date'] ?? null,
+                    'card_number' => $response_array['card_number'] ?? null,
+                    'card_product_name' => $response_array['card_product_name'] ?? null,
+                    'card_sequence_number' => $response_array['card_sequence_number'] ?? null,
+                    'currency_code' => $response_array['currency_code'] ?? null,
+                    'date_time' => $response_array['date_time'] ?? null,
+                    'emv_amount' => $response_array['emv_amount'] ?? null,
+                    'emv_amount_other' => $response_array['emv_amount_other'] ?? null,
+                    'emv_application_identifier' => $response_array['emv_application_identifier'] ?? null,
+                    'emv_application_interchange_profile' => $response_array['emv_application_interchange_profile'] ?? null,
+                    'emv_application_transaction_counter' => $response_array['emv_application_transaction_counter'] ?? null,
+                    'emv_authorization_response_code' => $response_array['emv_authorization_response_code'] ?? null,
+                    'emv_cryptogram' => $response_array['emv_cryptogram'] ?? null,
+                    'emv_cryptogram_information_data' => $response_array['emv_cryptogram_information_data'] ?? null,
+                    'emv_cvm_results' => $response_array['emv_cvm_results'] ?? null,
+                    'emv_issuer_action_code_default' => $response_array['emv_issuer_action_code_default'] ?? null,
+                    'emv_issuer_action_code_denial' => $response_array['emv_issuer_action_code_denial'] ?? null,
+                    'emv_issuer_action_code_online' => $response_array['emv_issuer_action_code_online'] ?? null,
+                    'emv_issuer_application_data' => $response_array['emv_issuer_application_data'] ?? null,
+                    'emv_terminal_capabilities' => $response_array['emv_terminal_capabilities'] ?? null,
+                    'emv_terminal_country_code' => $response_array['emv_terminal_country_code'] ?? null,
+                    'emv_terminal_type' => $response_array['emv_terminal_type'] ?? null,
+                    'emv_terminal_verification_result' => $response_array['emv_terminal_verification_result'] ?? null,
+                    'emv_transaction_currency_code' => $response_array['emv_transaction_currency_code'] ?? null,
+                    'emv_transaction_date' => $response_array['emv_transaction_date'] ?? null,
+                    'emv_transaction_status_information' => $response_array['emv_transaction_status_information'] ?? null,
+                    'emv_transaction_type' => $response_array['emv_transaction_type'] ?? null,
+                    'emv_unpredictable_number' => $response_array['emv_unpredictable_number'] ?? null,
+                    'expiry_date' => $response_array['expiry_date'] ?? null,
+                    'local_date' => $response_array['local_date'] ?? null,
+                    'local_time' => $response_array['local_time'] ?? null,
+                    'merchant_id' => $response_array['merchant_id'] ?? null,
+                    'message_reason_code' => $response_array['message_reason_code'] ?? null,
+                    'pan_entry_mode' => $response_array['pan_entry_mode'] ?? null,
+                    'pos_condition' => $response_array['pos_condition'] ?? null,
+                    'pos_data_code' => $response_array['pos_data_code'] ?? null,
+                    'response_code' => $response_array['response_code'] ?? null,
+                    'retrieval_ref_nr' => $response_array['retrieval_ref_nr'] ?? null,
+                    'terminal_id' => $response_array['terminal_id'] ?? null,
+                    'track2' => $response_array['track2'] ?? null,
+                    'transaction_amount' => $response_array['transaction_amount'] ?? null,
+                    'trans_type' => $response_array['type'] ?? null,
                 ];
 
-                $response = Http::withHeaders([
+                //dd($sale_data);
+
+                $response = $http->withHeaders([
                     'Content-Type' => 'application/json',
-                    'Authorization' => 'Bearer ' . $token
+                    'Authorization' => 'Bearer ' . $token,
+                    'X-LOCATION-AUTH' => get_token(),
                 ])->post($url, $sale_data);
 
                 if ($response->successful()) {
@@ -109,49 +146,84 @@ class EFTController extends Controller
                     $datetime = Carbon::parse($sale['created_at'])->setTimezone('Africa/Harare')->toDateTimeString();
 
 
-                    $this->receipt->printReceipt($sale['reference'], $cashier_name, "EFT", $datetime, $request->items, $sale['currency'], $sale['amount'], 0, 0);
+                    $this->receipt->printReceipt($sale['reference'], $cashier_name, "EFT", $datetime, $request->items, $request->currency, $sale['amount'], 0, 0);
 
                     return back()->with(['success' => 'Transaction sent successfully']);
                 } else {
                     //dd($response->body());
                     $ef = new FailEft();
-                    $ef->details = "" . $sale_data;
+                    $ef->details = $sale_data;
                     $ef->save();
 
                     return back()->withErrors(['error' => 'Transaction was received but not saved']);
                 }
             } else {
-                //dd($eft_response);
+
                 $response_array = $this->extractTransactionData($eft_response['raw']);
-                //dd($response_array);
+
                 $sale_data2 = [
                     'amount' => $request->amount,
-                    'type' => 'EFT',
                     'currency' => $currency,
-                    'items' => $request->items,
-                    'transaction_id' => $response_array['transaction_id'],
-                    'account' => $response_array['account'],
-                    'action_code' => $response_array['action_code'],
-                    'authorization_number' => $response_array['authorization_number'],
-                    'business_date' => $response_array['business_date'],
-                    'date_time' => $response_array['date_time'],
-                    'card_number' => $response_array['card_number'],
-                    'card_product_name' => $response_array['card_product_name'],
-                    'currency_code' => $response_array['currency_code'],
-                    'trans_type' => $response_array['type'],
-                    'terminal' => $term_id,
-                    'location' => get_location()
+                    'transaction_id' => $response_array['transaction_id'] ?? null,
+                    'account' => $response_array['account'] ?? null,
+                    'action_code' => $response_array['action_code'] ?? null,
+                    'amount_transaction_fee' => $response_array['amount_transaction_fee'] ?? null,
+                    'authorization_number' => $response_array['authorization_number'] ?? null,
+                    'authorization_profile' => $response_array['authorization_profile'] ?? null,
+                    'business_date' => $response_array['business_date'] ?? null,
+                    'card_number' => $response_array['card_number'] ?? null,
+                    'card_product_name' => $response_array['card_product_name'] ?? null,
+                    'card_sequence_number' => $response_array['card_sequence_number'] ?? null,
+                    'currency_code' => $response_array['currency_code'] ?? null,
+                    'date_time' => $response_array['date_time'] ?? null,
+                    'emv_amount' => $response_array['emv_amount'] ?? null,
+                    'emv_amount_other' => $response_array['emv_amount_other'] ?? null,
+                    'emv_application_identifier' => $response_array['emv_application_identifier'] ?? null,
+                    'emv_application_interchange_profile' => $response_array['emv_application_interchange_profile'] ?? null,
+                    'emv_application_transaction_counter' => $response_array['emv_application_transaction_counter'] ?? null,
+                    'emv_authorization_response_code' => $response_array['emv_authorization_response_code'] ?? null,
+                    'emv_cryptogram' => $response_array['emv_cryptogram'] ?? null,
+                    'emv_cryptogram_information_data' => $response_array['emv_cryptogram_information_data'] ?? null,
+                    'emv_cvm_results' => $response_array['emv_cvm_results'] ?? null,
+                    'emv_issuer_action_code_default' => $response_array['emv_issuer_action_code_default'] ?? null,
+                    'emv_issuer_action_code_denial' => $response_array['emv_issuer_action_code_denial'] ?? null,
+                    'emv_issuer_action_code_online' => $response_array['emv_issuer_action_code_online'] ?? null,
+                    'emv_issuer_application_data' => $response_array['emv_issuer_application_data'] ?? null,
+                    'emv_terminal_capabilities' => $response_array['emv_terminal_capabilities'] ?? null,
+                    'emv_terminal_country_code' => $response_array['emv_terminal_country_code'] ?? null,
+                    'emv_terminal_type' => $response_array['emv_terminal_type'] ?? null,
+                    'emv_terminal_verification_result' => $response_array['emv_terminal_verification_result'] ?? null,
+                    'emv_transaction_currency_code' => $response_array['emv_transaction_currency_code'] ?? null,
+                    'emv_transaction_date' => $response_array['emv_transaction_date'] ?? null,
+                    'emv_transaction_status_information' => $response_array['emv_transaction_status_information'] ?? null,
+                    'emv_transaction_type' => $response_array['emv_transaction_type'] ?? null,
+                    'emv_unpredictable_number' => $response_array['emv_unpredictable_number'] ?? null,
+                    'expiry_date' => $response_array['expiry_date'] ?? null,
+                    'local_date' => $response_array['local_date'] ?? null,
+                    'local_time' => $response_array['local_time'] ?? null,
+                    'merchant_id' => $response_array['merchant_id'] ?? null,
+                    'message_reason_code' => $response_array['message_reason_code'] ?? null,
+                    'pan_entry_mode' => $response_array['pan_entry_mode'] ?? null,
+                    'pos_condition' => $response_array['pos_condition'] ?? null,
+                    'pos_data_code' => $response_array['pos_data_code'] ?? null,
+                    'response_code' => $response_array['response_code'] ?? null,
+                    'retrieval_ref_nr' => $response_array['retrieval_ref_nr'] ?? null,
+                    'terminal_id' => $response_array['terminal_id'] ?? null,
+                    'track2' => $response_array['track2'] ?? null,
+                    'transaction_amount' => $response_array['transaction_amount'] ?? null,
+                    'trans_type' => $response_array['type'] ?? null,
                 ];
 
-                $url2 = base_url() . '/eft-failed';
+                $url2 = base_url() . '/eftfailed';
 
-                $response = Http::withHeaders([
+                $response_failed = $http->withHeaders([
                     'Content-Type' => 'application/json',
-                    'Authorization' => 'Bearer ' . $token
+                    'Authorization' => 'Bearer ' . $token,
+                    'X-LOCATION-AUTH' => get_token(),
                 ])->post($url2, $sale_data2);
 
-                if ($response->successful()) {
-                    $resp = $response->json();
+                if ($response_failed->successful()) {
+                    //$resp = $response->json();
                 }
 
                 $response_code_mapper = new ResponseCodeMapper();

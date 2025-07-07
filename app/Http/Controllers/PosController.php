@@ -25,8 +25,11 @@ class PosController extends Controller
      */
     public function index(Request $request, HttpClientWithHeaderCapture $http)
     {
-        //$eft = EFTService::getInstance();
-        //$eft->initializeConnection();
+        if(initialize_on_startup())
+        {
+            $eft = EFTService::getInstance();
+            $eft->initializeConnection();
+        }
 
         $token = Session::get('api_token');
         $items = [];

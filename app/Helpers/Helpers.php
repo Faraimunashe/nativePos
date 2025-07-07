@@ -48,6 +48,12 @@ function get_location()
     return $state['location_name'];
 }
 
+function initialize_on_startup()
+{
+    $state = session('terminal_state');
+    return $state['eft'];
+}
+
 function get_selected_printer()
 {
     $env = Environment::first();

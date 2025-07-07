@@ -51,6 +51,7 @@ class SpecialSaleController extends Controller
                 'items.*.price' => ['required', 'numeric', 'min:0'],
                 'items.*.total_price' => ['required', 'numeric', 'min:0'],
                 'consumer_code' => ['required', 'string'],
+                'pin' => ['required', 'string'],
             ]);
 
             //dd($validated_data);
@@ -64,6 +65,8 @@ class SpecialSaleController extends Controller
                 'Authorization' => 'Bearer ' . $token,
                 'X-LOCATION-AUTH' => get_token(),
             ])->post($url, $validated_data);
+
+            //dd($validated_data);
 
             if ($response->successful()) {
                 $data = $response->json();

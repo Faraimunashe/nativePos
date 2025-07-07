@@ -94,6 +94,9 @@
                     <input type="text" :value="selectedCurrency" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-200" readonly>
                 </div>
             </div>
+            <div v-if="loading" class="flex justify-between mt-4 text-red-600 text-bold">
+                Please do not remove card, wait for device instruction!
+            </div>
             <div v-if="loading" class="flex justify-between mt-4 text-yellow-500 text-bold">
                 Wait, don't close! Payment is processing ...
             </div>
@@ -121,6 +124,10 @@
                 <div class="mb-4">
                     <label class="block text-gray-700 font-semibold mb-2">Regnum/EC Number</label>
                     <input type="text" :disabled="loading" v-model="consumerCode" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div v-if="consumerCode" class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Consumer Pin</label>
+                    <input type="password" :disabled="loading" v-model="consumerPin" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
             </div>
             <div v-if="loading" class="flex justify-between mt-4 text-yellow-500 text-bold">
@@ -174,6 +181,7 @@ export default {
         const currencyEftCode = ref("840"); // set a default value from state
         const loading = ref(false);
         const consumerCode = ref("");
+        const consumerPin = ref("");
 
         const updatePrices = () => {
             const currency = props.currencies.find(c => c.code === selectedCurrency.value);
@@ -352,7 +360,8 @@ export default {
             type: "SPECIAL",
             currency: selectedCurrency.value,
             items: [],
-            consumer_code: ''
+            consumer_code: '',
+            pin: ''
         });
 
         const processSpecialSale = async () => {
@@ -368,12 +377,13 @@ export default {
                 total_price: (item.price * conversionRate.value) * item.quantity
             }));
             specialForm.consumer_code = consumerCode.value;
+            specialForm.pin = consumerPin.value
 
             specialForm.post("/special", {
                 onSuccess: () => {
                     snackbar.add({ type: 'success', text: 'Payment was successful' });
                     resetCart();
-                    closeCashModal();
+                    closeSpecialModal();
                 },
                 onError: (errors) => {
                     snackbar.add({ type: 'error', text: errors.error });
@@ -418,7 +428,8 @@ export default {
             closeSpecialModal,
             openSpecialModal,
             processSpecialSale,
-            consumerCode
+            consumerCode,
+            consumerPin
         };
     },
 };
