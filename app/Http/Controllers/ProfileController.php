@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\HttpClientWithHeaderCapture;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -31,7 +32,7 @@ class ProfileController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, HttpClientWithHeaderCapture $http)
     {
         try{
             $validator = Validator::make($request->all(), [
@@ -46,10 +47,11 @@ class ProfileController extends Controller
             $token = Session::get('api_token');
             $url = base_url() . '/change-password';
 
-            $response = Http::withHeaders([
+            $response = $http->withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $token,
+                'X-LOCATION-AUTH' => get_token(),
             ])->post($url, [
                 'current_password' => $request->current_password,
                 'new_password' => $request->new_password,

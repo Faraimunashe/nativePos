@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Environment;
+use App\Models\Configuration;
 
 function base_url()
 {
-    $env = Environment::first();
+    $env = Configuration::first();
     $ip = $env->server_ip;
     $ver = $env->server_version;
     $url = $ip . "/" . $ver;
@@ -14,7 +14,7 @@ function base_url()
 
 function get_socket_ip()
 {
-    $env = Environment::first();
+    $env = Configuration::first();
     $socket_ip = $env->socket_ip;
     return $socket_ip;
 }
@@ -22,14 +22,14 @@ function get_socket_ip()
 
 function get_socket_port()
 {
-    $env = Environment::first();
+    $env = Configuration::first();
     $socket_port = $env->socket_port;
     return $socket_port;
 }
 
 function get_token()
 {
-    $env = Environment::first();
+    $env = Configuration::first();
     $token = $env->token;
     return $token;
 }
@@ -56,7 +56,7 @@ function initialize_on_startup()
 
 function get_selected_printer()
 {
-    $env = Environment::first();
+    $env = Configuration::first();
     $printer = $env->printer;
     return $printer;
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Config;
 
 use App\Http\Controllers\Controller;
+use App\Models\Configuration;
 use App\Models\Environment;
 use Exception;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ class EnvConfigController extends Controller
         $printers = connected_printers();
 
         return inertia("ConfigPage", [
-            "config" => Environment::first(),
+            "config" => Configuration::first(),
             "printers" => $printers
         ]);
     }
@@ -46,7 +47,7 @@ class EnvConfigController extends Controller
                 'token' => ['required', 'string']
             ]);
 
-            $env = Environment::first();
+            $env = Configuration::first();
 
             //dd($request->all());
 
@@ -61,7 +62,7 @@ class EnvConfigController extends Controller
 
                 return back()->with('success', 'Environment configuration updated successfully');
             } else {
-                $env = new Environment();
+                $env = new Configuration();
                 $env->server_ip = $request->server_ip;
                 $env->server_version = $request->server_version;
                 $env->socket_ip = $request->socket_ip;
@@ -75,7 +76,7 @@ class EnvConfigController extends Controller
 
 
         } catch (Exception $e) {
-            dd("error");
+            //dd("error");
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }

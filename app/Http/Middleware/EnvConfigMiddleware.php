@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Environment;
+use App\Models\Configuration;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +16,7 @@ class EnvConfigMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $config = Environment::first();
+        $config = Configuration::first();
 
         if (is_null($config)) {
             return redirect()->route('configs')->withErrors(['error' => 'Please configure your environment first.']);
