@@ -8,8 +8,10 @@ use App\Services\PrintReceipt;
 use Carbon\Carbon;
 use Http;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Session;
+use Str;
 
 class PosController extends Controller
 {
@@ -25,40 +27,48 @@ class PosController extends Controller
      */
     public function index(Request $request, HttpClientWithHeaderCapture $http)
     {
-        if(initialize_on_startup())
-        {
-            $eft = EFTService::getInstance();
-            $eft->initializeConnection();
-        }
-
         $token = Session::get('api_token');
-        $items = [];
-        $currencies = [];
+        $search_term = $request->input('search', '');
+        $search_term = $request->input('search', '');
+        $cache_key = 'cached_all_items';
+        $cache_duration = 60 * 30;
 
-        $query_params = [];
-        if ($request->has('search') && !empty($request->search)) {
-            $query_params['search'] = $request->search;
+        if (empty($search_term)) {
+            $itemsData = Cache::remember($cache_key, $cache_duration, function () use ($http, $token) {
+                $url = base_url() . '/items';
+                $response = $http->withToken($token)
+                    ->withHeaders(['X-LOCATION-AUTH' => get_token()])
+                    ->get($url);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                return ['data' => [], 'rates' => []];
+            });
+
+            return inertia("PosPage", [
+                'items' => $itemsData['data'],
+                'currencies' => $itemsData['rates'],
+            ]);
         }
 
-        $url = base_url() . '/items';
-        $response = $http->withToken($token)->withHeaders(['X-LOCATION-AUTH' => get_token()])->get($url, $query_params);
+        if (Cache::has($cache_key)) {
+            $cached = Cache::get($cache_key);
+            $allItems = $cached['data'];
 
+            $filtered = collect($allItems)->filter(function ($item) use ($search_term) {
+                return Str::contains(Str::lower($item['name']), Str::lower($search_term));
+            })->values();
 
-        if ($response->successful()) {
-            $data = $response->json();
-            //dd($data);
-            $items = $data['data'];
-            $currencies = $data['rates'];
+            return inertia("PosPage", [
+                'items' => $filtered,
+                'currencies' => $cached['rates'],
+            ]);
         }
 
-        return inertia("PosPage", [
-            'items' => $items,
-            'currencies' => $currencies,
-            //'terminal' => get_terminal_id(),
-            //'location' => get_location()
-        ]);
+        return redirect()->route('pos');
     }
-
     /**
      * Show the form for creating a new resource.
      */

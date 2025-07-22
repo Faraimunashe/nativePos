@@ -397,7 +397,13 @@ export default {
         watch(selectedCurrency, updatePrices);
 
         watch(search, (value) => {
-            router.get("/pos", { search: value }, { preserveState: true, preserveScroll: true, replace: true });
+            router.get('/pos', { search: value }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                //only: ['items'], // optional: limits what data is updated
+                debounce: 300,
+            });
         });
 
         onMounted(updatePrices);

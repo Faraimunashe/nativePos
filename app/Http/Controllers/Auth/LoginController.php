@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use App\Services\EFTService;
 
 class LoginController extends Controller
 {
@@ -52,14 +53,18 @@ class LoginController extends Controller
 
             Session::put('eft_codes', $data['rates']);
 
+            if(initialize_on_startup())
+            {
+                $eft = EFTService::getInstance();
+                $eft->initializeConnection();
+            }
+
             return redirect()->intended('pos');
         }else{
             $data = $response->json();
 
             $msg = $data['message'];
         }
-
-        //dd($response);
 
         return back()->withErrors(['email' => $msg]);
     }

@@ -1,7 +1,5 @@
 <?php
 
-// custom made by Faraimunashe
-
 namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
@@ -14,7 +12,7 @@ class HttpClientWithHeaderCapture
 
     public function __construct()
     {
-        $this->client = Http::timeout(5);
+        $this->client = Http::withOptions([]);
     }
 
     public function withToken(string $token): self
@@ -56,7 +54,6 @@ class HttpClientWithHeaderCapture
         $special = $response->header('X-TRANSACT-SPECIAL');
 
         if (empty($term_id) || empty($location_name) || empty($default_currency)) {
-            //dd($term_id, $location_name, $default_currency, $terminal_status, $cash, $eft, $special);
             Session::forget(['api_token', 'user']);
             return redirect()->route('login')->withErrors(['error' => 'An important terminal variable is missing contact admin']);
         }
@@ -75,8 +72,5 @@ class HttpClientWithHeaderCapture
             'eft' => filter_var($eft, FILTER_VALIDATE_BOOLEAN),
             'special' => filter_var($special, FILTER_VALIDATE_BOOLEAN)
         ]);
-
-
-
     }
 }
