@@ -4,6 +4,7 @@
   <div class="container mx-auto px-4 py-6">
     <!-- Filters & Totals -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+        <!-- <code class="mb-2 text-red-700 font-small">Showing your sales for today by default</code> -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <!-- Search -->
         <div class="flex flex-col">
@@ -88,7 +89,7 @@
           class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm sm:text-base font-semibold"
         >
           <span class="mr-1">{{ total.currency.code }}</span>
-          <b>{{ formatCurrency(total.total, total.currency.code) }}</b>
+          <b>{{ total.total }}</b>
         </span>
       </div>
     </div>
@@ -112,7 +113,7 @@
             <tr v-for="sale in sales.data" :key="sale.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm">{{ sale.reference }}</td>
               <td class="px-4 py-3 text-sm">
-                {{ formatCurrency(sale.amount, sale.currency.code) }}
+                {{ sale.amount }}
               </td>
               <td class="px-4 py-3 text-sm">{{ sale.currency.code }}</td>
               <td class="px-4 py-3 text-sm">{{ sale.type }}</td>
@@ -165,12 +166,12 @@
             <div>
               <h3 class="text-lg font-semibold">{{ item.item.name }}</h3>
               <p class="text-sm text-gray-600">
-                Qty: {{ item.qty }} &middot; Unit Price: {{ formatCurrency(item.unit_price, selectedSale.currency.code) }}
+                Qty: {{ item.qty }} &middot; Unit Price: {{ item.unit_price, selectedSale.currency.code }}
               </p>
             </div>
             <div class="mt-2 sm:mt-0 text-right">
               <p class="text-sm text-gray-600">Total</p>
-              <p class="text-lg font-bold">{{ formatCurrency(item.total_price, selectedSale.currency.code) }}</p>
+              <p class="text-lg font-bold">{{ item.total_price, selectedSale.currency.code }}</p>
             </div>
           </li>
         </ul>
@@ -221,7 +222,7 @@ export default {
             reference: reference.value,
             location_id: location_id.value,
           },
-          { preserveState: true, preserveScroll: true, replace: true }
+          { preserveState: true, preserveScroll: true, replace: true, debounce: 300 }
         )
       }
     )
