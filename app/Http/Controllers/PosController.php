@@ -31,7 +31,7 @@ class PosController extends Controller
         $search_term = $request->input('search', '');
         $search_term = $request->input('search', '');
         $cache_key = 'cached_all_items';
-        $cache_duration = 60 * 30;
+        $cache_duration = 60 * 180;
 
         if (empty($search_term)) {
             $itemsData = Cache::remember($cache_key, $cache_duration, function () use ($http, $token) {
